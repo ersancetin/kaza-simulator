@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Türkiye haritasında seçilen konumda trafik kazası simülasyonu: 3B canlandırma, fren izinden hız hesabı ve kusur oranı değerlendirmesi.">
+    <title>Kaza Simülatörü — Trafik Kazası Canlandırma ve Kusur Analizi</title>
+    <meta property="og:title" content="Kaza Simülatörü — Trafik Kazası Canlandırma ve Kusur Analizi">
+    <meta property="og:description" content="Türkiye haritasında seçilen konumda gerçek yol verisiyle 3B kaza canlandırması: fren izinden hız tespiti, KTK temelli kusur oranı analizi ve yazdırılabilir ön rapor.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ersancetin.github.io/kaza-simulator/">
+    <meta property="og:image" content="https://ersancetin.github.io/kaza-simulator/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f6fed'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='28' font-weight='bold' fill='white' text-anchor='middle'%3EKS%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="lib/leaflet.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="lib/leaflet.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "./lib/three.module.js",
+            "three/addons/controls/OrbitControls.js": "./lib/OrbitControls.js"
+        }
+    }
+    </script>
+</head>
+<body>
+
+<!-- ================= EKRAN 1: HARİTA ================= -->
+<div id="ekran-harita" class="ekran aktif">
+    <header class="ust-bar">
+        <div class="marka">
+            <span class="marka__logo">KS</span>
+            <div>
+                <div class="marka__ad">Kaza Simülatörü</div>
+                <div class="marka__alt">Trafik kazası canlandırma ve kusur analizi</div>
+            </div>
+        </div>
+        <div class="arama">
+            <input id="arama-girdi" type="text" placeholder="Türkiye'de yer arayın (ör. Kızılay Meydanı, Ankara)…" autocomplete="off">
+            <div id="arama-sonuclar" class="arama__sonuclar gizli"></div>
+        </div>
+    </header>
+
+    <div id="harita"></div>
+
+    <div class="harita-ipucu">Kazanın gerçekleştiği noktaya <b>haritada tıklayın</b> veya yukarıdan arama yapın.</div>
+
+    <div id="konum-kart" class="konum-kart gizli">
+        <div class="konum-kart__baslik">Seçilen kaza noktası</div>
+        <div id="konum-kart-adres" class="konum-kart__adres">—</div>
+        <div id="konum-kart-koordinat" class="konum-kart__koordinat">—</div>
+        <button id="btn-simulasyona-git" class="btn btn--birincil">Simülasyonu Kur →</button>
+        <div id="konum-kart-durum" class="konum-kart__durum"></div>
+    </div>
+</div>
+
+<!-- ================= EKRAN 2: SİMÜLASYON ================= -->
+<div id="ekran-sim" class="ekran">
+    <div id="sahne-kap"></div>
+
+    <header class="ust-bar ust-bar--sim">
+        <button id="btn-haritaya-don" class="btn btn--ikincil">← Haritaya Dön</button>
+        <div id="sim-konum-adi" class="sim-konum-adi">—</div>
+        <div style="display:flex;align-items:center;gap:10px">
+            <span id="surum" style="font-size:11px;color:var(--metin-soluk)"></span>
+            <button id="btn-foto" class="btn btn--ikincil" title="Sahnenin fotoğrafını indir (rapora eklemek için)">Fotoğraf</button>
+            <button id="btn-panel-gizle" class="btn btn--ikincil">Paneli Gizle</button>
+        </div>
+    </header>
+
+    <!-- Sol panel: parametreler + rapor -->
+    <aside id="panel" class="panel">
+        <div class="panel__icerik">
+
+            <button id="btn-nokta-tasi" class="btn btn--ikincil btn--genis" style="margin-bottom:14px">Çarpışma Noktasını Sahneden Seç</button>
+
+            <section class="bolum" id="bolum-isaret-ekle">
+                <h3>Trafik Levhası ve Öge Ekle</h3>
+                <p class="bolum-aciklama">Tip seçin, sahnede istediğiniz yerlere tıklayın — aynı tipten arka arkaya yerleştirebilirsiniz; bitirmek için düğmeye tekrar basın. Levhalar en yakın yolun kenarına, trafiğe dönük hizalanır; listeden döndürülüp silinebilir.</p>
+                <div class="isaret-izgara">
+                    <button type="button" class="isaret-btn" data-isaret="traffic_signals">Trafik Işığı</button>
+                    <button type="button" class="isaret-btn" data-isaret="stop">Dur (DUR)</button>
+                    <button type="button" class="isaret-btn" data-isaret="give_way">Yol Ver</button>
+                    <button type="button" class="isaret-btn" data-isaret="hiz-tabela">Hız Limiti</button>
+                    <button type="button" class="isaret-btn" data-isaret="sollama-yasak">Sollama Yasağı</button>
+                    <button type="button" class="isaret-btn" data-isaret="park-yasak">Park Yasağı</button>
+                    <button type="button" class="isaret-btn" data-isaret="giris-yok">Girişi Yok</button>
+                    <button type="button" class="isaret-btn" data-isaret="ozel-tabela">Yazılı Levha</button>
+                    <button type="button" class="isaret-btn" data-isaret="crossing">Yaya Geçidi</button>
+                    <button type="button" class="isaret-btn" data-isaret="traffic_calming">Kasis</button>
+                    <button type="button" class="isaret-btn" data-isaret="agac">Ağaç</button>
+                    <button type="button" class="isaret-btn" data-isaret="duba">Duba</button>
+                    <button type="button" class="isaret-btn" data-isaret="bariyer">Bariyer</button>
+                    <button type="button" class="isaret-btn" data-isaret="direk">Elektrik Direği</button>
+                    <button type="button" class="isaret-btn" data-isaret="konteyner">Konteyner</button>
+                    <button type="button" class="isaret-btn" data-isaret="kedi">Kedi</button>
+                    <button type="button" class="isaret-btn" data-isaret="kopek">Köpek</button>
+                </div>
+                <div id="elle-isaret-liste" class="ekli-liste"></div>
+            </section>
+
+            <section class="bolum" id="bolum-yol-ciz">
+                <h3>Yol / Yaya Yolu Çiz</h3>
+                <div class="mod-secim">
+                    <button type="button" id="btn-yol-ciz">Yol Çiz</button>
+                    <button type="button" id="btn-yaya-ciz">Yaya Yolu Çiz</button>
+                </div>
+                <div id="cizim-ipucu" class="gizli" style="font-size:12px;color:var(--metin-soluk);margin-top:6px">
+                    Sahneye tıklayarak güzergâh noktaları ekleyin; bitirmek için aynı düğmeye tekrar basın.
+                </div>
+                <div id="cizilen-yol-liste" style="font-size:12px;margin-top:6px"></div>
+            </section>
+
+            <section class="bolum gizli" id="bolum-yol-bilgi">
+                <h3>Konumdan Okunan Veriler (OSM)</h3>
+                <div id="yol-bilgi-icerik" style="font-size:12.5px;line-height:1.65"></div>
+            </section>
+
+            <section class="bolum">
+                <h3>Genel Koşullar</h3>
+                <label class="alan">
+                    <span>Yol yüzeyi</span>
+                    <select id="g-yuzey"></select>
+                </label>
+                <div class="alan-satir">
+                    <label class="alan">
+                        <span>Sürtünme katsayısı (µ)</span>
+                        <input id="g-mu" type="number" step="0.01" min="0.05" max="1.2">
+                    </label>
+                    <label class="alan">
+                        <span>Hız limiti (km/s)</span>
+                        <input id="g-limit" type="number" step="5" min="10" max="140" value="50">
+                    </label>
+                </div>
+            </section>
+
+            <section class="bolum" id="bolum-arac-A"></section>
+            <section class="bolum" id="bolum-arac-B"></section>
+
+            <button id="btn-hesapla" class="btn btn--birincil btn--genis">Hesapla ve Canlandır ▶</button>
+
+            <section class="bolum gizli" id="bolum-rapor">
+                <h3>Analiz Raporu</h3>
+                <div id="rapor-icerik"></div>
+                <button id="btn-yazdir" class="btn btn--ikincil btn--genis">Raporu Yazdır / PDF</button>
+                <p class="uyari">⚠️ Bu araç yalnızca eğitim ve ön değerlendirme amaçlıdır; basitleştirilmiş fizik modellerine dayanır. Resmî bilirkişi raporu veya hukuki görüş yerine <b>geçmez</b>.</p>
+            </section>
+
+            <div class="panel-alt">
+                Kaza Simülatörü · Eğitim amaçlı ön değerlendirme aracı<br>
+                Yol verileri © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> katkıcıları
+            </div>
+        </div>
+    </aside>
+
+    <!-- Alt bar: zaman çizelgesi -->
+    <div id="zaman-bar" class="zaman-bar gizli">
+        <button id="btn-oynat" class="btn btn--yuvarlak">▶</button>
+        <input id="zaman-kaydirici" type="range" min="0" max="1000" value="0">
+        <div id="zaman-metin" class="zaman-metin">0.0 s</div>
+        <select id="oynatma-hizi" title="Oynatma hızı">
+            <option value="0.25">0.25×</option>
+            <option value="0.5" selected>0.5×</option>
+            <option value="1">1×</option>
+        </select>
+        <select id="kamera-modu" title="Kamera">
+            <option value="serbest">Serbest kamera</option>
+            <option value="ustten">Üstten (kuşbakışı)</option>
+            <option value="A">A aracını takip</option>
+            <option value="B">B aracını takip</option>
+        </select>
+    </div>
+
+    <div id="sim-yukleniyor" class="sim-yukleniyor gizli">Yol verileri yükleniyor…</div>
+</div>
+
+<!-- Yazdırma alanı -->
+<div id="yazdirma-alani"></div>
+
+<script type="module" src="js/main.js?v=2.6"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+name: GitHub Pages Yayını
+
+# main dalındaki içeriği gh-pages dalına aynalar;
+# GitHub Pages siteyi gh-pages dalından yayınlar.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  yayinla:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: gh-pages dalına yayınla
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan gh-pages
+          git rm -rf --cached .github >/dev/null 2>&1 || true
+          rm -rf .github
+          git add -A
+          git commit -m "Pages yayını: ${GITHUB_SHA}"
+          git push -f origin gh-pages
