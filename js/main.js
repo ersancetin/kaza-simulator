@@ -2,12 +2,12 @@
 // hesaplama, kusur analizi ve rapor üretimi.
 // Taraflar araç veya yaya olabilir; kaza noktası sahneden taşınabilir.
 
-import { haritayiBaslat, aramaKur, konumaGit, cevreVerisiGetir, varsayilanCevre, yolaHizala } from './map.js?v=2.6';
-import { YUZEYLER, kmh2ms, ms2kmh, izdenHiz, frenMesafesi, durusMesafesi, siddetEtiketi } from './physics.js?v=2.6';
-import { IHLALLER, YAYA_IHLALLERI, kusurHesapla } from './kusur.js?v=2.6';
-import { Simulasyon, ARAC_TURLERI } from './sim3d.js?v=2.6';
+import { haritayiBaslat, aramaKur, konumaGit, cevreVerisiGetir, varsayilanCevre, yolaHizala } from './map.js?v=2.7';
+import { YUZEYLER, kmh2ms, ms2kmh, izdenHiz, frenMesafesi, durusMesafesi, siddetEtiketi } from './physics.js?v=2.7';
+import { IHLALLER, YAYA_IHLALLERI, kusurHesapla } from './kusur.js?v=2.7';
+import { Simulasyon, ARAC_TURLERI } from './sim3d.js?v=2.7';
 
-const SURUM = 'v2.6';
+const SURUM = 'v2.7';
 const $ = (id) => document.getElementById(id);
 $('surum').textContent = SURUM;
 
@@ -535,7 +535,8 @@ function kusurBloku(kusur, girdiler) {
         : `<div class="gerekce">• Tespit edilen kural ihlali yok</div>`;
     return `
     <div class="rapor-blok">
-        <h4>Kusur Değerlendirmesi</h4>
+        <h4>Kusur Değerlendirmesi (Bilgilendirme Amaçlı)</h4>
+        <div class="yasal-uyari">Bu bölüm yalnızca bilgilendirme amaçlıdır; hukuki görüş, bilirkişi incelemesi veya kusur tespiti niteliği taşımaz. Gerçek kusur değerlendirmesi somut olayın tüm delilleriyle yetkili merciler ve bilirkişilerce yapılır.</div>
         ${kusur.belirsiz ? '<div class="gerekce">İki taraf için de ihlal işaretlenmediğinden kusur dağılımı belirlenememiştir; %50-%50 varsayılmıştır.</div>' : ''}
         <div class="kusur-cubuk">
             <div class="kusur-A" style="flex:${Math.max(kusur.A.yuzde, 8)}">A %${kusur.A.yuzdeMetin}</div>
@@ -587,14 +588,17 @@ $('btn-yazdir').addEventListener('click', () => {
         : '<p class="kucuk">Tespit edilen ihlal yok.</p>';
 
     $('yazdirma-alani').innerHTML = `
-        <h1>Trafik Kazası Ön Analiz Raporu</h1>
+        <h1>Trafik Kazası Simülasyon Özeti</h1>
+        <p style="border:1.5px solid #c00;padding:8px 12px;font-size:10.5pt;color:#900">
+        <b>BİLGİLENDİRME AMAÇLIDIR.</b> Bu belge, basitleştirilmiş fizik modelleriyle çalışan bir simülasyon aracının çıktısıdır.
+        Hukuki görüş, bilirkişi raporu, kusur tespiti veya delil niteliği taşımaz; resmî ya da adli hiçbir işlemde bu nitelikle kullanılamaz.</p>
         <p class="kucuk">Konum: ${secilenKonum ? secilenKonum.adres : '—'}<br>
         Koordinat: ${secilenKonum ? secilenKonum.lat.toFixed(6) + ', ' + secilenKonum.lon.toFixed(6) : '—'}<br>
         Rapor tarihi: ${new Date().toLocaleString('tr-TR')}<br>
         Yol yüzeyi sürtünme katsayısı: µ = ${girdiler.mu} — Hız limiti: ${girdiler.limit} km/s</p>
         <h2>Hesaplama Sonuçları</h2>
         <table>
-            <tr><th>Taraf</th><th>Geliş yönü</th><th>Kaza öncesi hız (km/s)</th><th>Çarpma hızı (km/s)</th><th>Fren izi (m)</th><th>ΔV (km/s)</th><th>Kusur</th></tr>
+            <tr><th>Taraf</th><th>Geliş yönü</th><th>Kaza öncesi hız (km/s)</th><th>Çarpma hızı (km/s)</th><th>Fren izi (m)</th><th>ΔV (km/s)</th><th>Kusur (bilgilendirme amaçlı)</th></tr>
             ${satir('A')}${satir('B')}
         </table>
         <h2>${tarafAdi('A', girdiler.A)} — Kusur Gerekçeleri</h2>${gerekceListesi('A')}
@@ -602,8 +606,9 @@ $('btn-yazdir').addEventListener('click', () => {
         <h2>Yöntem</h2>
         <p class="kucuk">Fren izinden hız: v = √(v<sub>son</sub>² + 2µgd). Çarpışma: iki boyutlu momentum korunumu (kısmen esnek, e≈0.22).
         Kusur dağılımı: 2918 sayılı KTK (m.84 asli kusur halleri; yayalar için m.68-69, sürücüler için m.74) esas alınarak ağırlıklandırılmış puanlama.</p>
-        <p class="kucuk"><b>Uyarı:</b> Bu belge basitleştirilmiş fizik modelleriyle üretilmiş bir ön değerlendirmedir;
-        resmî bilirkişi raporu veya hukuki görüş niteliği taşımaz.</p>
+        <p class="kucuk"><b>Uyarı:</b> Bu belge basitleştirilmiş fizik modelleriyle üretilmiş, yalnızca bilgilendirme
+        amaçlı bir simülasyon özetidir; resmî bilirkişi raporu, hukuki görüş, kusur tespiti veya delil niteliği taşımaz.
+        Anılan mevzuat hükümleri örneklendirme amaçlıdır; güncel ve bağlayıcı metin için resmî kaynaklara başvurulmalıdır.</p>
     `;
     window.print();
 });

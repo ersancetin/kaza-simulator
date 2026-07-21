@@ -4,24 +4,24 @@
 // basitleştirilmiş bir puanlama modelidir. Hukuki görüş niteliği taşımaz.
 
 export const IHLALLER = [
-    { id: 'kirmizi-isik',   ad: 'Kırmızı ışık ihlali',                        puan: 100, dayanak: 'KTK m.84/a — asli kusur hali' },
-    { id: 'gecis-onceligi', ad: 'Kavşakta geçiş önceliğine uymama',           puan: 100, dayanak: 'KTK m.84/g, m.57 — asli kusur hali' },
-    { id: 'karsi-serit',    ad: 'Karşı şeride / yasak yöne girme',            puan: 100, dayanak: 'KTK m.84/c — asli kusur hali' },
-    { id: 'arkadan-carpma', ad: 'Arkadan çarpma (takip mesafesi ihlali)',     puan: 100, dayanak: 'KTK m.84/d, m.52 — asli kusur hali' },
-    { id: 'yasak-sollama',  ad: 'Geçme (sollama) yasağı ihlali',              puan: 90,  dayanak: 'KTK m.84/e, m.54' },
-    { id: 'manevra',        ad: 'Kurallara aykırı dönüş / manevra',           puan: 70,  dayanak: 'KTK m.84/f, m.53' },
-    { id: 'serit-ihlali',   ad: 'Şerit izleme / değiştirme kuralı ihlali',    puan: 55,  dayanak: 'KTK m.84/ç, m.46' },
+    { id: 'kirmizi-isik',   ad: 'Kırmızı ışık ihlali',                        puan: 100, dayanak: 'KTK m.47; m.84 kapsamında asli kusur sayılan hâl' },
+    { id: 'gecis-onceligi', ad: 'Kavşakta geçiş önceliğine uymama',           puan: 100, dayanak: 'KTK m.57; m.84 kapsamında asli kusur sayılan hâl' },
+    { id: 'karsi-serit',    ad: 'Karşı şeride / yasak yöne girme',            puan: 100, dayanak: 'KTK m.46; m.84 kapsamında asli kusur sayılan hâl' },
+    { id: 'arkadan-carpma', ad: 'Arkadan çarpma (takip mesafesi ihlali)',     puan: 100, dayanak: 'KTK m.56; m.84 kapsamında asli kusur sayılan hâl' },
+    { id: 'yasak-sollama',  ad: 'Geçme (sollama) yasağı ihlali',              puan: 90,  dayanak: 'KTK m.54; m.84 kapsamında asli kusur sayılan hâl' },
+    { id: 'manevra',        ad: 'Kurallara aykırı dönüş / manevra',           puan: 70,  dayanak: 'KTK m.53; m.84 kapsamında asli kusur sayılan hâl' },
+    { id: 'serit-ihlali',   ad: 'Şerit izleme / değiştirme kuralı ihlali',    puan: 55,  dayanak: 'KTK m.56 (şerit izleme ve değiştirme)' },
     { id: 'alkol',          ad: 'Alkol / uyuşturucu etkisinde sürüş',         puan: 80,  dayanak: 'KTK m.48' },
-    { id: 'dikkatsizlik',   ad: 'Dikkatsizlik (telefon vb.)',                 puan: 35,  dayanak: 'KTK m.84 son fıkra çerçevesinde tali kusur' },
-    { id: 'gerekli-tedbir', ad: 'Tehlikeyi görünce tedbir almama',            puan: 25,  dayanak: 'KTK m.52/1-b' },
-    { id: 'yaya-gecidi',    ad: 'Yaya geçidinde yavaşlamama / yayaya öncelik vermeme', puan: 100, dayanak: 'KTK m.74, m.84 — asli kusur ağırlığında' },
+    { id: 'dikkatsizlik',   ad: 'Dikkatsizlik (telefon vb.)',                 puan: 35,  dayanak: 'Genel dikkat ve özen yükümlülüğü — tali kusur ağırlığında' },
+    { id: 'gerekli-tedbir', ad: 'Tehlikeyi görünce tedbir almama',            puan: 25,  dayanak: 'KTK m.52 (hızın şartlara uydurulması)' },
+    { id: 'yaya-gecidi',    ad: 'Yaya geçidinde yavaşlamama / yayaya öncelik vermeme', puan: 100, dayanak: 'KTK m.74' },
 ];
 
-// Yaya katılımcılar için ihlal listesi (KTK m.68-69)
+// Yaya katılımcılar için ihlal listesi (KTK m.68 — yayaların uyacakları kurallar)
 export const YAYA_IHLALLERI = [
-    { id: 'yaya-kirmizi',    ad: 'Kırmızı ışıkta / yaya kırmızısında geçme',            puan: 80, dayanak: 'KTK m.69' },
-    { id: 'yaya-gecit-disi', ad: 'Yakında geçit varken geçit dışından geçme',           puan: 60, dayanak: 'KTK m.68/b' },
-    { id: 'yaya-tasit-yolu', ad: 'Taşıt yolunda yürüme / taşıt yoluna ani çıkış',       puan: 50, dayanak: 'KTK m.68/a-c' },
+    { id: 'yaya-kirmizi',    ad: 'Kırmızı ışıkta / yaya kırmızısında geçme',            puan: 80, dayanak: 'KTK m.68 (ışıklı işaretlere uyma)' },
+    { id: 'yaya-gecit-disi', ad: 'Yakında geçit varken geçit dışından geçme',           puan: 60, dayanak: 'KTK m.68' },
+    { id: 'yaya-tasit-yolu', ad: 'Taşıt yolunda yürüme / taşıt yoluna ani çıkış',       puan: 50, dayanak: 'KTK m.68' },
     { id: 'yaya-dikkatsiz',  ad: 'Yola kontrolsüz / dikkatsiz çıkma',                   puan: 35, dayanak: 'KTK m.68' },
 ];
 
@@ -34,8 +34,8 @@ export function hizAsimiPuani(hizKmh, limitKmh) {
     const oran = hizKmh / limitKmh;
     if (oran <= 1.10) return null;
     if (oran <= 1.30) return { id: 'hiz-10-30', ad: `Hız limitini aşma (%${Math.round((oran - 1) * 100)})`, puan: 35, dayanak: 'KTK m.51 — tali kusur ağırlığında' };
-    if (oran <= 1.50) return { id: 'hiz-30-50', ad: `Hız limitini ciddi aşma (%${Math.round((oran - 1) * 100)})`, puan: 65, dayanak: 'KTK m.51, m.84/b' };
-    return { id: 'hiz-50+', ad: `Hız limitini ağır aşma (%${Math.round((oran - 1) * 100)})`, puan: 100, dayanak: 'KTK m.51, m.84/b — asli kusur ağırlığında' };
+    if (oran <= 1.50) return { id: 'hiz-30-50', ad: `Hız limitini ciddi aşma (%${Math.round((oran - 1) * 100)})`, puan: 65, dayanak: 'KTK m.51' };
+    return { id: 'hiz-50+', ad: `Hız limitini ağır aşma (%${Math.round((oran - 1) * 100)})`, puan: 100, dayanak: 'KTK m.51 — asli kusur ağırlığında' };
 }
 
 // arac = { ihlaller: ['kirmizi-isik', ...], hizKmh, limitKmh }

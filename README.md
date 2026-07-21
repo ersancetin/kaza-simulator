@@ -24,5 +24,8 @@ Tamamen statiktir; GitHub Pages üzerinde sunucu ve API anahtarı gerektirmeden 
 
 ## Uyarı
 
-Bu araç yalnızca eğitim ve ön değerlendirme amaçlıdır; basitleştirilmiş fizik
-modellerine dayanır. Resmî bilirkişi raporu veya hukuki görüş yerine **geçmez**.
+Bu araç **yalnızca bilgilendirme ve eğitim amaçlıdır**; basitleştirilmiş fizik
+modellerine dayanır. Ürettiği sonuçlar hukuki görüş, bilirkişi raporu, kusur
+tespiti veya delil niteliği **taşımaz**; resmî ya da adli işlemlerde kullanılamaz.
+Mevzuat atıfları örneklendirme amaçlıdır; bağlayıcı metin için resmî kaynaklara
+başvurulmalıdır.
