@@ -52,7 +52,7 @@ export const CARPISMA_TIP_ADI: Readonly<Record<SimSonuc['tip'], string>> = {
     yaya: 'Yayaya çarpma',
 };
 
-export const GIZLILIK_NOTU = 'Üyelik yok, çerez yok — kişisel veri toplamıyoruz; hesaplamalar tarayıcınızda yapılır. Harita, adres arama ve yol verisi için yalnızca arama metni ve seçilen konum OpenStreetMap hizmetlerine iletilir.';
+export const GIZLILIK_NOTU = 'Kişisel veri toplamıyoruz; hesaplamalar tarayıcınızda yapılır. Harita, adres arama ve yol verisi için yalnızca arama metni ve seçilen konum OpenStreetMap hizmetlerine iletilir.';
 
 // Lastik–yol tipik kayma sürtünme katsayıları (kilitli tekerlek)
 export const YUZEYLER: readonly Yuzey[] = [
