@@ -72,7 +72,7 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc, 
                         <h1 className="sr-only">Cumhuriyet Avukatları — Kaza Simülatörü</h1>
                         <MarkaBasligi />
                         <p className="mt-3 text-[12.5px] font-light leading-relaxed text-muted-foreground">
-                            Trafik kazasını gerçek yol üzerinde fizik tabanlı canlandırın; hız, kaçınılabilirlik ve kusur ön değerlendirmesini görün; kroki, fotoğraf ve video alın.
+                            Trafik kazasını gerçek yol üzerinde fizik tabanlı canlandırın; hız, kaçınılabilirlik ve olası kusur dağılımıni görün; kroki, fotoğraf ve video alın.
                         </p>
 
                         <div className="relative mt-5">

@@ -1,6 +1,6 @@
 'use client';
 
-// Hesaplama sonuçları ve kusur ön değerlendirmesi.
+// Hesaplama sonuçları ve olası kusur dağılımı.
 
 import { CircleHelp, FileImage, Printer, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -59,8 +59,8 @@ function TarafBlogu({ s, ad }: { s: TarafSonuc; ad: string }) {
                         <span title="Sürücü hız sınırında seyretseydi, tehlikeyi aynı noktada algılayıp aynı tepki süresiyle frene bassaydı ne olurdu?"><CircleHelp className="h-3.5 w-3.5 opacity-60" /></span>
                     </div>
                     {k.kacinilabilir
-                        ? <>Sınırda seyretseydi {k.limitteDurusMesafesi.toFixed(1)} m’de durarak çarpışma noktasına <b>ulaşmadan durabilirdi</b>.</>
-                        : <>Sınırda seyretseydi de duramazdı; çarpma hızı yaklaşık <b>{kmh(k.limitteCarpmaHizi)} km/s</b> olurdu.</>}
+                        ? <>Sınırda seyretseydi {k.limitteDurusMesafesi.toFixed(1)} m’de durarak çarpışma noktasına <b>ulaşmadan durabilmesi mümkün görünüyor</b>.</>
+                        : <>Sınırda seyretseydi de durması mümkün görünmüyor; çarpma hızı yaklaşık <b>{kmh(k.limitteCarpmaHizi)} km/s</b> olabilirdi.</>}
                 </div>
             )}
         </Kart>
@@ -117,12 +117,13 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
             <TarafBlogu s={sonuc.taraflar.B} ad={tarafAdlari.B} />
 
             <Kart className="p-4">
-                <Baslik>Kusur ön değerlendirmesi</Baslik>
+                <Baslik sag={<Rozet renk="sari" className="shrink-0">Tespit değildir</Rozet>}>Olası kusur dağılımı</Baslik>
                 <div className="flex h-9 overflow-hidden rounded-full text-[12.5px] font-bold text-white">
                     <div className="flex min-w-14 items-center justify-center bg-taraf-a transition-all" style={{ flex: Math.max(yuzde('A'), 9) }}>A %{kusur.A.yuzdeMetin}</div>
                     <div className="flex min-w-14 items-center justify-center bg-taraf-b transition-all" style={{ flex: Math.max(yuzde('B'), 9) }}>B %{kusur.B.yuzdeMetin}</div>
                 </div>
-                {kusur.belirsiz && <p className="mt-2 text-[12px] text-muted-foreground">İki taraf için de ihlal işaretlenmediğinden dağılım belirlenemedi; %50–%50 varsayıldı.</p>}
+                <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">Oranlar, yalnızca girdiğiniz ihlal ve hız bilgilerine göre 8’lik dilimle hesaplanmış <b>olası</b> bir dağılımdır; somut olayda farklı sonuç çıkabilir.</p>
+                {kusur.belirsiz && <p className="mt-2 text-[12px] text-muted-foreground">İki taraf için de ihlal işaretlenmediğinden olası dağılım belirlenemedi; %50–%50 varsayıldı.</p>}
                 <div className="mt-3 space-y-3">
                     {(['A', 'B'] as const).map((id) => (
                         <div key={id}>
@@ -135,8 +136,8 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
                             </div>
                             <ul className="mt-1 space-y-0.5 pl-1 text-[12px] leading-snug text-muted-foreground">
                                 {kusur[id].gerekceler.length
-                                    ? kusur[id].gerekceler.map((g) => <li key={g.ad}>• {g.ad} <i className="opacity-80">({g.dayanak})</i></li>)
-                                    : <li>• Kural ihlali işaretlenmedi</li>}
+                                    ? kusur[id].gerekceler.map((g) => <li key={g.ad}>• {g.ad} söz konusu olabilir <i className="opacity-80">({g.dayanak})</i></li>)
+                                    : <li>• Olası ihlal işaretlenmedi</li>}
                             </ul>
                         </div>
                     ))}

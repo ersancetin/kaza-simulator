@@ -49,7 +49,7 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                     <table className="mt-2 w-full border-collapse text-[9.5pt]">
                         <thead>
                             <tr>
-                                {['Taraf', 'Geliş', 'Kaza öncesi hız', 'Çarpma hızı', 'Fren izi', 'Duruş mesafesi', 'ΔV', 'Savrulma', 'Kusur'].map((b) => <th key={b} className={td}>{b}</th>)}
+                                {['Taraf', 'Geliş', 'Kaza öncesi hız', 'Çarpma hızı', 'Fren izi', 'Duruş mesafesi', 'ΔV', 'Savrulma', 'Olası kusur payı'].map((b) => <th key={b} className={td}>{b}</th>)}
                             </tr>
                         </thead>
                         <tbody>
@@ -81,8 +81,8 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                             <p key={id} className="mt-2 text-[9.5pt]">
                                 <b>{tarafAdlari[id]}:</b>{' '}
                                 {k && (k.kacinilabilir
-                                    ? `Hız sınırında (${Math.round(k.limitHizi * 3.6)} km/s) seyretseydi, ${k.algilamaMesafesi.toFixed(1)} m önceki algılama noktasından ${k.limitteDurusMesafesi.toFixed(1)} m'de durarak çarpışma noktasına ulaşmadan durabilirdi.`
-                                    : `Hız sınırında (${Math.round(k.limitHizi * 3.6)} km/s) seyretseydi de duramaz, yaklaşık ${kmh(k.limitteCarpmaHizi)} km/s ile çarpardı.`)}
+                                    ? `Hız sınırında (${Math.round(k.limitHizi * 3.6)} km/s) seyretseydi, ${k.algilamaMesafesi.toFixed(1)} m önceki algılama noktasından ${k.limitteDurusMesafesi.toFixed(1)} m'de durarak çarpışma noktasına ulaşmadan durabilmesi mümkün görünmektedir.`
+                                    : `Hız sınırında (${Math.round(k.limitHizi * 3.6)} km/s) seyretseydi de durması mümkün görünmemektedir; çarpma hızı yaklaşık ${kmh(k.limitteCarpmaHizi)} km/s olabilirdi.`)}
                                 {sr !== null && ` Fırlatma mesafesinden (${sonuc.taraflar[id].savrulmaMesafesi.toFixed(1)} m) Searle bağıntısıyla asgari çarpma hızı ≈ ${kmh(sr)} km/s.`}
                             </p>
                         );
@@ -90,12 +90,12 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
 
                     {(['A', 'B'] as const).map((id) => (
                         <div key={id} style={{ breakInside: 'avoid' }}>
-                            <h2 className="mt-4 border-b border-[#999] pb-1 text-[12pt] font-bold">{tarafAdlari[id]} — kusur gerekçeleri</h2>
+                            <h2 className="mt-4 border-b border-[#999] pb-1 text-[12pt] font-bold">{tarafAdlari[id]} — olası kusur gerekçeleri</h2>
                             {kusur[id].gerekceler.length ? (
                                 <ul className="mt-1 list-disc pl-5">
-                                    {kusur[id].gerekceler.map((g) => <li key={g.ad}>{g.ad} <span className="text-[8.5pt] text-[#555]">({g.dayanak})</span></li>)}
+                                    {kusur[id].gerekceler.map((g) => <li key={g.ad}>{g.ad} söz konusu olabilir <span className="text-[8.5pt] text-[#555]">({g.dayanak})</span></li>)}
                                 </ul>
-                            ) : <p className="mt-1 text-[9.5pt] text-[#555]">İşaretlenen ihlal yok.</p>}
+                            ) : <p className="mt-1 text-[9.5pt] text-[#555]">İşaretlenen olası ihlal yok.</p>}
                         </div>
                     ))}
 
@@ -111,7 +111,7 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                         Fren izinden hız: v = √(v<sub>son</sub>² + 2µgd). Çarpışma öncesi hareket: seyir → algılama/tepki → frenleme (sabit µg yavaşlama).
                         Çarpışma: iki boyutlu katı cisim itki modeli (doğrusal ve açısal momentum korunumu, çarpma katsayısı e ≈ 0,12, Coulomb temas sürtünmesi).
                         Çarpışma sonrası: boyuna/yanal lastik sürtünmesi ve sapma sönümü ile sayısal entegrasyon; ikincil temaslar yönlendirilmiş kutu (SAT) ile çözülür.
-                        Yaya: Searle fırlatma modeli (µ ≈ 0,66). Kusur dağılımı: 2918 sayılı KTK (m.84 asli kusur hâlleri; yayalar için m.68) esas alınarak ağırlıklandırılmış puanlama, 8'lik dilim.
+                        Yaya: Searle fırlatma modeli (µ ≈ 0,66). Olası kusur dağılımı: kullanıcının işaretlediği ihlallerle ilgili olabilecek 2918 sayılı KTK hükümleri (m.84 asli kusur hâlleri; yayalar için m.68) esas alınarak ağırlıklandırılmış puanlama, 8'lik dilim. Bu dağılım bir kusur tespiti değil, olasılık değerlendirmesidir.
                         Anılan mevzuat hükümleri örneklendirme amaçlıdır; güncel ve bağlayıcı metin için resmî kaynaklara başvurulmalıdır.
                     </p>
 

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     metadataBase: new URL('https://ersancetin.github.io/kaza-simulator/'),
     title: 'Kaza Simülatörü — Cumhuriyet Avukatları',
     description:
-        'Tarayıcıda çalışan trafik kazası canlandırması: gerçek yol verisi veya şablon senaryolarla 3B simülasyon, fren izinden hız, kaçınılabilirlik ve KTK temelli kusur ön değerlendirmesi; fotoğraf, kroki ve video çıktısı. Cumhuriyet Avukatları tarafından meslektaş faydasına hazırlanmış simülasyon aracıdır; hukuki görüş veya bilirkişi raporu değildir.',
+        'Tarayıcıda çalışan trafik kazası canlandırması: gerçek yol verisi veya şablon senaryolarla 3B simülasyon, fren izinden hız, kaçınılabilirlik ve KTK temelli olası kusur dağılımı; fotoğraf, kroki ve video çıktısı. Cumhuriyet Avukatları tarafından meslektaş faydasına hazırlanmış simülasyon aracıdır; hukuki görüş veya bilirkişi raporu değildir.',
     openGraph: {
         title: 'Kaza Simülatörü — Cumhuriyet Avukatları',
         description: 'Fizik tabanlı 3B kaza canlandırması, kroki ve video çıktısı — tamamen tarayıcıda.',

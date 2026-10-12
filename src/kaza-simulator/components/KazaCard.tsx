@@ -130,7 +130,7 @@ export function KazaCard({ id, k, liste, mu, guncelle }: KazaCardProps) {
 
                 <details className="group rounded-2xl border border-border/80">
                     <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-2.5 text-[12.5px] font-semibold">
-                        <span>Kural ihlalleri {k.ihlaller.length > 0 && <Rozet renk="kirmizi" className="ml-1">{k.ihlaller.length}</Rozet>}</span>
+                        <span>Olası kural ihlalleri {k.ihlaller.length > 0 && <Rozet renk="kirmizi" className="ml-1">{k.ihlaller.length}</Rozet>}</span>
                         <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
                     </summary>
                     <div className="space-y-0.5 px-1.5 pb-2">

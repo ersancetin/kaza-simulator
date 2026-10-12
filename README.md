@@ -27,7 +27,7 @@ Radix UI · Lucide · Three.js.
   - Sonuç 60 kare/sn kare dizisi: zaman çubuğunda ileri-geri sarma anlık ve tutarlı.
 - **Raporlama** — fren izinden hız, çarpma hızı, ΔV ve şiddet, duruş mesafesi, algılama noktası,
   **kaçınılabilirlik** (hız sınırında seyretseydi durabilir miydi), Searle ters hesabı, sönümlenen enerji,
-  KTK temelli 8'lik dilim kusur ön değerlendirmesi.
+  KTK temelli 8'lik dilim olası kusur dağılımı.
 - **Görseller** — profil ekstrüzyonlu araç gövdeleri (otomobil, SUV, pikap, panelvan, kamyon, otobüs, TIR,
   motosiklet, bisiklet, traktör), eklemli yürüyen yaya, Türkiye standardında levhalar (DUR, yol ver, ana yol,
   hız sınırı, sollama yasağı, park yasağı, girişi olmayan yol, yaya/okul geçidi, ada etrafında dönünüz),
@@ -85,6 +85,14 @@ npm run build      # out/ — herhangi bir statik barındırıcıya kopyalanabil
 
 GitHub Pages için iş akışı `NEXT_PUBLIC_BASE_PATH=/kaza-simulator` ile derler ve `out/` içeriğini
 `gh-pages` dalına yayınlar.
+
+## Olası kusur dağılımı hakkında
+
+Uygulama kusur **tespit etmez**. Kullanıcının işaretlediği olası ihlaller ve hız bilgisine göre, ilgili
+olabilecek KTK hükümleri esas alınarak 8'lik dilimde bir **olası dağılım** gösterir. Etiketler bu nedenle
+"Asli kusur ihtimali", "Tali kusur ihtimali", "Kusur görünmüyor" biçimindedir; gerekçeler "… söz konusu
+olabilir (KTK m.x ile ilgili olabilir)" diliyle yazılır. Madde atıfları örneklendirme amaçlıdır; güncel ve
+bağlayıcı metin için mevzuat.gov.tr'ye başvurulmalıdır.
 
 ## Yasal uyarı
 
