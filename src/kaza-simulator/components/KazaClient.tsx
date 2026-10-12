@@ -5,11 +5,12 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import * as RadixTooltip from '@radix-ui/react-tooltip';
 import {
-    ArrowLeft, Car, Crosshair, Info, Map as HaritaIkon, PanelLeftClose, PanelLeftOpen, Pencil, Play, Route, Trash2,
+    ArrowLeft, Crosshair, Scale, Info, Map as HaritaIkon, PanelLeftClose, PanelLeftOpen, Pencil, Play, Route, Trash2,
     TriangleAlert, X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ISARET_ADI, SURUM } from '../data/kazaData.ts';
+import { ISARET_ADI } from '../data/kazaData.ts';
+import { Altbilgi, MarkaBasligi, UyariPenceresi } from './Marka.tsx';
 import { tarafAdi, useKazaEngine, type PanelSekmesi } from '../hooks/useKazaEngine.ts';
 import { useKaydirma } from '../hooks/useKaydirma.ts';
 import { useKlavyeKisayollari } from '../hooks/useKlavyeKisayollari.ts';
@@ -45,6 +46,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
     const [panelAcik, setPanelAcik] = useState(true);
     const [sahneAcildi, setSahneAcildi] = useState(false);
     const [yolAdi, setYolAdi] = useState('');
+    const [uyariAcik, setUyariAcik] = useState(false);
 
     useEffect(() => {
         if (m.ekran === 'sahne') setSahneAcildi(true);
@@ -90,7 +92,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
     return (
         <RadixTooltip.Provider>
             {m.ekran === 'baslangic' && (
-                <BaslangicEkrani secilen={m.secilenKonum} konumSec={m.konumSec} kur={() => void m.konumdanKur()} sablonYukle={m.sablonYukle} />
+                <BaslangicEkrani secilen={m.secilenKonum} konumSec={m.konumSec} kur={() => void m.konumdanKur()} sablonYukle={m.sablonYukle} uyariAc={() => setUyariAcik(true)} />
             )}
 
             {sahneAcildi && (
@@ -100,14 +102,17 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                         <Buton tur="hayalet" boy="ikon" aria-label="Haritaya dön" title="Haritaya / senaryolara dön" onClick={m.baslangicaDon}>
                             <ArrowLeft className="h-5 w-5" />
                         </Buton>
-                        <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-aha-red text-white sm:flex"><Car className="h-4 w-4" /></span>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                                <h1 className="truncate text-[15px] font-bold leading-tight">Kaza Simülatörü</h1>
-                                <span className="hidden text-[11px] font-medium text-muted-foreground sm:inline">{SURUM}</span>
-                            </div>
+                        <MarkaBasligi kucuk className="hidden shrink-0 sm:flex" />
+                        <div className="min-w-0 flex-1 border-border/80 sm:border-l sm:pl-3">
+                            <h1 className="truncate text-[13.5px] font-bold leading-tight sm:hidden">Kaza Simülatörü</h1>
                             <div className="truncate text-[12px] font-light text-muted-foreground">{m.baslik}</div>
                         </div>
+                        <Buton tur="hayalet" boy="sm" className="hidden text-muted-foreground lg:inline-flex" onClick={() => setUyariAcik(true)} title="Yasal uyarı">
+                            <Scale className="h-4 w-4" /> Simülasyondur, bilirkişi raporu değildir
+                        </Buton>
+                        <Buton tur="hayalet" boy="ikon" className="lg:hidden" aria-label="Yasal uyarı" onClick={() => setUyariAcik(true)}>
+                            <Scale className="h-4 w-4" />
+                        </Buton>
                         <span className="hidden md:block">
                             <Buton tur="ikincil" boy="sm" onClick={() => setPanelAcik((a) => !a)} title="Paneli aç/kapat (P)">
                                 {panelAcik ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />} Panel
@@ -213,6 +218,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                                 <b>Kısayollar:</b> Boşluk oynat/duraklat · ←/→ 0,1 sn (Shift: 1 sn) · 1–6 kamera · P panel · F tam ekran · Esc iptal
                                             </p>
                                         </Kart>
+                                        <Altbilgi className="px-1 pt-1" uyariAc={() => setUyariAcik(true)} />
                                     </Tabs.Content>
 
                                     <Tabs.Content value="taraflar" className="space-y-3 outline-none">
@@ -279,6 +285,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                 </div>
             )}
 
+            <UyariPenceresi acik={uyariAcik} setAcik={setUyariAcik} />
             <KilitModali acik={m.kilitAcik} kapat={m.kilitKapat} girisIste={m.girisIste} />
 
             <YazdirmaRaporu sonuc={m.sonuc} kusur={m.kusur} katilimcilar={m.katilimcilar} tarafAdlari={tarafAdlari} kosullar={m.kosullar} konum={m.baslik} kroki={m.yazdirmaKroki} gelisler={gelisler} />

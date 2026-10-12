@@ -6,7 +6,31 @@ import type {
     SablonSenaryo, TarafId, Vec2, Yol, YolSinifi, Yuzey, GenelKosullar,
 } from '../types/kazaTypes.ts';
 
-export const SURUM = 'v3.0';
+export const SURUM = 'v3.1';
+
+// ---- Kurumsal kimlik ve yasal metinler ----
+const TABAN_YOL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_PATH) || '';
+export const MARKA = {
+    kurum: 'Cumhuriyet Avukatları',
+    kurumBuyuk: 'CUMHURİYET AVUKATLARI',
+    uygulama: 'Kaza Simülatörü',
+    logo: `${TABAN_YOL}/logo.png`,
+    instagram: 'https://www.instagram.com/cumhuriyet_avukatlari',
+    instagramAd: 'cumhuriyet_avukatlari',
+} as const;
+
+/** Kısa uyarı: altbilgi, HUD, kroki */
+export const KISA_UYARI = 'Simülasyon aracıdır; hukuki görüş, bilirkişi raporu veya delil niteliği taşımaz.';
+
+/** Uzun uyarı metni: ilk giriş penceresi, başlangıç ekranı ve rapor */
+export const YASAL_UYARI: readonly string[] = [
+    'Kaza Simülatörü, Cumhuriyet Avukatları tarafından meslektaşlarımızın faydasına, trafik kazası dosyalarında olayın görselleştirilmesi ve ön değerlendirmesine yardımcı olmak amacıyla ücretsiz olarak hazırlanmış bir simülasyon aracıdır.',
+    'Uygulamanın ürettiği canlandırma, kroki, hız, mesafe ve kusur dağılımları basitleştirilmiş fizik modellerine ve kullanıcının girdiği verilere dayanır. Sonuçlar hukuki görüş, bilirkişi raporu, Adli Tıp/ATK veya kusur raporu niteliği taşımaz; delil olarak ya da bu raporların yerine kullanılamaz.',
+    'Somut olayda kusur, hız ve tazminat değerlendirmesi; dosyadaki tüm deliller ışığında uzman bilirkişiler ve yetkili yargı mercilerince yapılır. Mevzuat atıfları örneklendirme amaçlıdır; güncel ve bağlayıcı metin için resmî kaynaklara başvurulmalıdır.',
+    'Uygulamanın kullanımından veya sonuçlarına dayanılarak alınan kararlardan doğabilecek zararlardan Cumhuriyet Avukatları sorumlu tutulamaz.',
+];
+
+export const GIZLILIK_NOTU = 'Üyelik yok, çerez yok, veri toplanmaz — tüm hesaplamalar tarayıcınızda yapılır, girdileriniz hiçbir sunucuya gönderilmez.';
 
 // Lastik–yol tipik kayma sürtünme katsayıları (kilitli tekerlek)
 export const YUZEYLER: readonly Yuzey[] = [

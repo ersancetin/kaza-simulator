@@ -8,7 +8,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { ARAC_TURLERI, TARAF_RENK } from '../../data/kazaData.ts';
 import type { Cevre, IzSerisi, KameraModu, KatilimciTipi, AracTuruId, SimSonuc, TarafId, Vec2 } from '../../types/kazaTypes.ts';
 import { KANAL_SAYISI } from '../../types/kazaTypes.ts';
-import { hudCiz, type HudMetin } from '../hud.ts';
+import { hudCiz, logoGorseli, logoYukle, type HudMetin } from '../hud.ts';
+import { KISA_UYARI, MARKA } from '../../data/kazaData.ts';
 import { videoDestekleniyor, videoTuru, type VideoSecenek, type VideoSonuc } from '../video.ts';
 import { kareOku } from '../simulate.ts';
 import { Rota } from '../geometry.ts';
@@ -750,6 +751,7 @@ export class SahneMotoru {
 
     /** Geçerli görünümün yüksek çözünürlüklü fotoğrafı (isteğe bağlı bilgi katmanıyla) */
     async fotoAl(hudlu: boolean): Promise<Blob> {
+        if (hudlu) await logoYukle();
         const w = this.kap.clientWidth || 1;
         const h = this.kap.clientHeight || 1;
         const olcek = Math.min(2, 2560 / w);
@@ -774,6 +776,7 @@ export class SahneMotoru {
 
     /** Ölçekli kuşbakışı kaza krokisi (A4 yatay oranında) */
     async krokiAl(bilgi: { baslik: string; altSatirlar: string[] }): Promise<Blob> {
+        await logoYukle();
         const s = this.sonuc;
         // Sınırlar: güzergâhlar + kaza noktası
         let minX = this.P.x - 25, maxX = this.P.x + 25, minZ = this.P.z - 18, maxZ = this.P.z + 18;
@@ -953,10 +956,24 @@ export class SahneMotoru {
         x.fillText(bilgi.baslik, 40, haritaH + 62);
         x.font = `500 24px ${FONT}`;
         x.fillStyle = '#4a4d55';
-        bilgi.altSatirlar.slice(0, 3).forEach((satir, i) => x.fillText(satir.length > 150 ? satir.slice(0, 148) + '…' : satir, 40, haritaH + 104 + i * 34));
-        x.font = `500 19px ${FONT}`;
+        bilgi.altSatirlar.slice(0, 3).forEach((satir, i) => x.fillText(satir.length > 95 ? satir.slice(0, 93) + '…' : satir, 40, haritaH + 104 + i * 34));
+        x.font = `500 18px ${FONT}`;
         x.fillStyle = '#7F828A';
-        x.fillText('A1/B1: çarpışma anı konumu (kesikli) · A2/B2: son duruş · ✕: çarpışma noktası · Bilgilendirme amaçlıdır; bilirkişi krokisi yerine geçmez.', 40, H - 26);
+        x.fillText(`A1/B1: çarpışma anı konumu (kesikli) · A2/B2: son duruş · ✕: çarpışma noktası · ${KISA_UYARI}`, 40, H - 26);
+        // Kurum logosu ve adı (sağ)
+        const lg = logoGorseli();
+        if (lg) x.drawImage(lg, W - 40 - 130, haritaH + 30, 130, 130);
+        x.textAlign = 'right';
+        x.fillStyle = '#2D3039';
+        x.font = `700 18px ${FONT}`;
+        x.fillText(MARKA.kurumBuyuk, W - 190, haritaH + 80);
+        x.fillStyle = '#C81D25';
+        x.font = `600 20px ${FONT}`;
+        x.fillText(MARKA.uygulama, W - 190, haritaH + 108);
+        x.fillStyle = '#7F828A';
+        x.font = `400 16px ${FONT}`;
+        x.fillText('Meslektaşlarımızın faydasına hazırlanmıştır', W - 190, haritaH + 134);
+        x.textAlign = 'left';
         return this.kanvasaBlob(c);
     }
 
@@ -968,6 +985,7 @@ export class SahneMotoru {
         const tur = videoTuru();
         if (!tur) return Promise.reject(new Error('Desteklenen video biçimi bulunamadı.'));
 
+        void logoYukle();
         const W = sec.genislik;
         const H = sec.yukseklik;
         const c = document.createElement('canvas');

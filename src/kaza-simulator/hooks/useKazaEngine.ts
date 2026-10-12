@@ -601,7 +601,7 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
 
     // ---- Dışa aktarım ----
     const krokiBilgisi = useCallback(() => ({
-        baslik: 'Kaza Krokisi (Simülasyon)',
+        baslik: 'Kaza Krokisi (Simülasyon — bilirkişi krokisi değildir)',
         altSatirlar: [
             `Konum: ${baslik || '—'}`,
             `${tarafAdi('A', katilimcilar.A)}  ·  ${tarafAdi('B', katilimcilar.B)}  ·  µ = ${kosullar.mu.toFixed(2)}  ·  Hız sınırı ${kosullar.limitKmh} km/s`,

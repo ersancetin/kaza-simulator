@@ -134,7 +134,7 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir }: S
                     ))}
                 </div>
                 <p className="mt-3 rounded-2xl border border-aha-red/25 bg-aha-red/[0.04] px-3.5 py-2.5 text-[11.5px] leading-relaxed text-foreground/80">
-                    <b>Bilgilendirme amaçlıdır.</b> Hukuki görüş, bilirkişi incelemesi veya kusur tespiti niteliği taşımaz. Gerçek kusur değerlendirmesi somut olayın tüm delilleriyle yetkili merciler ve bilirkişilerce yapılır.
+                    <b>Simülasyon sonucudur.</b> Meslektaşlarımızın dosya hazırlığına yardımcı olmak için sunulan bir ön değerlendirmedir; hukuki görüş, bilirkişi raporu veya kusur tespiti niteliği taşımaz. Gerçek kusur değerlendirmesi somut olayın tüm delilleriyle bilirkişiler ve yargı mercilerince yapılır.
                 </p>
             </Kart>
 

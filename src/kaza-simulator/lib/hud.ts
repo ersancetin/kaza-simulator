@@ -3,6 +3,27 @@
 
 import type { SimSonuc, TarafId, TarafSonuc } from '../types/kazaTypes.ts';
 import { KANAL_SAYISI } from '../types/kazaTypes.ts';
+import { KISA_UYARI, MARKA } from '../data/kazaData.ts';
+
+let logo: HTMLImageElement | null = null;
+let logoSozu: Promise<HTMLImageElement | null> | null = null;
+
+/** Kurum logosunu bir kez yükler (görüntülere işlemek için) */
+export function logoYukle(): Promise<HTMLImageElement | null> {
+    if (!logoSozu) {
+        logoSozu = new Promise((coz) => {
+            const i = new Image();
+            i.onload = () => { logo = i; coz(i); };
+            i.onerror = () => coz(null);
+            i.src = MARKA.logo;
+        });
+    }
+    return logoSozu;
+}
+
+export function logoGorseli(): HTMLImageElement | null {
+    return logo;
+}
 
 export interface TarafAnlik {
     hizKmh: number;
@@ -52,24 +73,28 @@ export function hudCiz(x: CanvasRenderingContext2D, W: number, H: number, metin:
     x.save();
     x.textBaseline = 'middle';
 
-    // Üst sol: marka + konum
-    x.font = `700 ${18 * k}px ${FONT}`;
-    const baslikW = x.measureText(metin.baslik).width;
+    // Üst sol: logo + marka + konum
+    const ust = `${MARKA.kurumBuyuk} · ${metin.baslik}`;
+    x.font = `700 ${15 * k}px ${FONT}`;
+    const baslikW = x.measureText(ust).width;
     x.font = `500 ${13 * k}px ${FONT}`;
     const konum = metin.konum.length > 90 ? metin.konum.slice(0, 88) + '…' : metin.konum;
     const konumW = x.measureText(konum).width;
-    const kutuW = Math.max(baslikW, konumW) + 36 * k + 26 * k;
-    x.fillStyle = 'rgba(255,255,255,0.92)';
+    const logoR = 23 * k;
+    const metinX = pad + 12 * k + logoR * 2 + 12 * k;
+    const kutuW = metinX - pad + Math.max(baslikW, konumW) + 22 * k;
+    x.fillStyle = 'rgba(255,255,255,0.93)';
     x.beginPath();
-    x.roundRect(pad, pad, kutuW, 58 * k, 18 * k);
+    x.roundRect(pad, pad, kutuW, 62 * k, 31 * k);
     x.fill();
-    hap(x, pad + 14 * k, pad + 15 * k, 10 * k, 28 * k, '#C81D25');
+    if (logo) x.drawImage(logo, pad + 8 * k, pad + 8 * k, logoR * 2, logoR * 2);
+    else hap(x, pad + 14 * k, pad + 15 * k, 10 * k, 32 * k, '#C81D25');
     x.fillStyle = '#2D3039';
-    x.font = `700 ${18 * k}px ${FONT}`;
-    x.fillText(metin.baslik, pad + 34 * k, pad + 21 * k);
+    x.font = `700 ${15 * k}px ${FONT}`;
+    x.fillText(ust, metinX, pad + 23 * k);
     x.fillStyle = '#7F828A';
     x.font = `500 ${13 * k}px ${FONT}`;
-    x.fillText(konum, pad + 34 * k, pad + 42 * k);
+    x.fillText(konum, metinX, pad + 43 * k);
 
     if (sonuc) {
         // Üst sağ: zaman
@@ -112,7 +137,7 @@ export function hudCiz(x: CanvasRenderingContext2D, W: number, H: number, metin:
     }
 
     // Alt şerit: uyarı
-    const uyari = 'Bilgilendirme amaçlı simülasyondur · bilirkişi raporu ya da delil niteliği taşımaz';
+    const uyari = KISA_UYARI;
     x.font = `500 ${11.5 * k}px ${FONT}`;
     const uW = x.measureText(uyari).width + 28 * k;
     hap(x, W - pad - uW, H - pad - 26 * k, uW, 26 * k, 'rgba(45,48,57,0.78)');

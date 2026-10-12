@@ -1,4 +1,9 @@
-# Kaza Simülatörü v3
+# Kaza Simülatörü — Cumhuriyet Avukatları
+
+<img src="public/logo.png" alt="Cumhuriyet Avukatları" width="96" align="right">
+
+Meslektaşlarımızın faydasına, ücretsiz olarak hazırlanmış bir trafik kazası **simülatörüdür**.
+Hukuki görüş, bilirkişi raporu veya delil niteliği taşımaz.
 
 Tarayıcıda çalışan, fizik tabanlı trafik kazası canlandırma ve ön analiz aracı.
 GateOS In-Browser Micro-App kılavuzuna (`GATEOS-APP-DEV-MANUAL`) göre yeniden yazılmıştır:
@@ -81,10 +86,18 @@ npm run build      # out/ — herhangi bir statik barındırıcıya kopyalanabil
 GitHub Pages için iş akışı `NEXT_PUBLIC_BASE_PATH=/kaza-simulator` ile derler ve `out/` içeriğini
 `gh-pages` dalına yayınlar.
 
-## Uyarı
+## Yasal uyarı
 
-Bu araç **yalnızca bilgilendirme ve eğitim amaçlıdır**; basitleştirilmiş fizik modellerine dayanır.
-Ürettiği sonuçlar hukuki görüş, bilirkişi raporu, kusur tespiti veya delil niteliği **taşımaz**; resmî ya da
-adli işlemlerde kullanılamaz. Mevzuat atıfları örneklendirme amaçlıdır.
+Kaza Simülatörü, Cumhuriyet Avukatları tarafından meslektaşlarımızın faydasına, trafik kazası dosyalarında
+olayın görselleştirilmesi ve ön değerlendirmesine yardımcı olmak amacıyla ücretsiz olarak hazırlanmış bir
+simülasyon aracıdır. Ürettiği canlandırma, kroki, hız, mesafe ve kusur dağılımları basitleştirilmiş fizik
+modellerine ve kullanıcının girdiği verilere dayanır; **hukuki görüş, bilirkişi raporu, Adli Tıp/ATK veya kusur
+raporu niteliği taşımaz**, delil olarak ya da bu raporların yerine kullanılamaz. Somut olayda kusur, hız ve
+tazminat değerlendirmesi uzman bilirkişiler ve yetkili yargı mercilerince yapılır. Mevzuat atıfları
+örneklendirme amaçlıdır. Uygulamanın kullanımından doğabilecek zararlardan Cumhuriyet Avukatları sorumlu
+tutulamaz.
+
+Uyarı, ilk girişte okunup onaylanan pencerede, uygulama altbilgisinde ve tüm çıktılarda (fotoğraf, video,
+kroki, A4 rapor) yer alır. Üyelik yok, çerez yok, veri toplanmaz.
 
 Yol verileri © [OpenStreetMap](https://www.openstreetmap.org/copyright) katkıcıları.

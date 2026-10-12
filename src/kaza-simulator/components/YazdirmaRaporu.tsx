@@ -2,7 +2,7 @@
 
 // Yalnızca yazdırırken görünen A4 rapor (Yazdır / PDF olarak kaydet).
 
-import { ARAC_TURLERI } from '../data/kazaData.ts';
+import { ARAC_TURLERI, GIZLILIK_NOTU, MARKA, YASAL_UYARI } from '../data/kazaData.ts';
 import type { GenelKosullar, KatilimciGirdi, KusurSonuc, SimSonuc, TarafId } from '../types/kazaTypes.ts';
 
 export interface YazdirmaRaporuProps {
@@ -24,10 +24,18 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
         <div id="yazdirma-alani" className="bg-white text-[10.5pt] leading-snug text-black">
             {sonuc && kusur && (
                 <>
-                    <h1 className="text-[17pt] font-bold">Trafik Kazası Simülasyon Özeti</h1>
-                    <p className="mt-2 border-[1.5px] border-[#C81D25] px-3 py-2 text-[9.5pt] text-[#8b0000]">
-                        <b>BİLGİLENDİRME AMAÇLIDIR.</b> Bu belge basitleştirilmiş fizik modelleriyle çalışan bir simülasyon aracının çıktısıdır.
-                        Hukuki görüş, bilirkişi raporu, kusur tespiti veya delil niteliği taşımaz; resmî ya da adli işlemlerde bu nitelikle kullanılamaz.
+                    <div className="flex items-center justify-between gap-4 border-b-2 border-[#C81D25] pb-3">
+                        <div>
+                            <div className="text-[9pt] font-bold tracking-[0.14em]">{MARKA.kurumBuyuk}</div>
+                            <h1 className="text-[17pt] font-bold">Trafik Kazası Simülasyon Özeti</h1>
+                            <div className="text-[9pt] text-[#C81D25]">{MARKA.uygulama} · meslektaşlarımızın faydasına hazırlanmıştır</div>
+                        </div>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={MARKA.logo} alt="" className="h-[22mm] w-[22mm]" />
+                    </div>
+                    <p className="mt-3 border-[1.5px] border-[#C81D25] px-3 py-2 text-[9.5pt] text-[#8b0000]">
+                        <b>SİMÜLASYON ÇIKTISIDIR — HUKUKİ GÖRÜŞ VEYA BİLİRKİŞİ RAPORU DEĞİLDİR.</b> Bu belge basitleştirilmiş fizik modelleriyle çalışan bir simülasyon aracının çıktısıdır;
+                        bilirkişi raporu, kusur tespiti veya delil niteliği taşımaz, resmî ya da adli işlemlerde bu nitelikle kullanılamaz.
                     </p>
                     <p className="mt-2 text-[9.5pt] text-[#444]">
                         Konum: {konum || '—'}<br />
@@ -105,6 +113,14 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                         Yaya: Searle fırlatma modeli (µ ≈ 0,66). Kusur dağılımı: 2918 sayılı KTK (m.84 asli kusur hâlleri; yayalar için m.68) esas alınarak ağırlıklandırılmış puanlama, 8'lik dilim.
                         Anılan mevzuat hükümleri örneklendirme amaçlıdır; güncel ve bağlayıcı metin için resmî kaynaklara başvurulmalıdır.
                     </p>
+
+                    <div style={{ breakInside: 'avoid' }}>
+                        <h2 className="mt-4 border-b border-[#999] pb-1 text-[12pt] font-bold">Yasal uyarı</h2>
+                        <div className="mt-1 space-y-1 text-[8.5pt] text-[#444]">
+                            {YASAL_UYARI.map((p) => <p key={p.slice(0, 24)}>{p}</p>)}
+                        </div>
+                        <p className="mt-3 text-[8pt] text-[#777]">© {new Date().getFullYear()} {MARKA.kurum} · {GIZLILIK_NOTU}</p>
+                    </div>
                 </>
             )}
         </div>

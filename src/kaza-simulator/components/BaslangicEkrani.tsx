@@ -1,12 +1,13 @@
 'use client';
 
-import { Car, ChevronRight, Loader2, MapPin, PersonStanding, Route, Search, Waypoints, WifiOff, X } from 'lucide-react';
+import { Car, ChevronRight, HeartHandshake, Loader2, MapPin, PersonStanding, Route, Search, Waypoints, WifiOff, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { SABLONLAR, SURUM } from '../data/kazaData.ts';
+import { SABLONLAR } from '../data/kazaData.ts';
+import { Altbilgi, MarkaBasligi } from './Marka.tsx';
 import { adresAra } from '../lib/osm.ts';
 import type { SecilenKonum } from '../types/kazaTypes.ts';
 import { HaritaSecici } from './HaritaSecici.tsx';
-import { Buton, Rozet, cn } from './ui/temel.tsx';
+import { Buton, Rozet } from './ui/temel.tsx';
 
 const SABLON_IKON = { Kavşak: Waypoints, Şehirlerarası: Route, 'Şehir içi': Car, Yaya: PersonStanding } as const;
 
@@ -15,9 +16,10 @@ export interface BaslangicEkraniProps {
     konumSec: (k: SecilenKonum | null) => void;
     kur: () => void;
     sablonYukle: (id: string) => void;
+    uyariAc: () => void;
 }
 
-export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle }: BaslangicEkraniProps) {
+export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc }: BaslangicEkraniProps) {
     const [sorgu, setSorgu] = useState('');
     const [sonuclar, setSonuclar] = useState<SecilenKonum[]>([]);
     const [araniyor, setAraniyor] = useState(false);
@@ -65,15 +67,11 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle }: Baslang
             <aside className="pointer-events-none absolute inset-x-3 bottom-3 top-auto z-[1000] flex max-h-[62vh] flex-col md:inset-y-4 md:left-4 md:right-auto md:max-h-none md:w-[420px]">
                 <div className="pointer-events-auto flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-border/80 bg-white/95 shadow-xl backdrop-blur">
                     <div className="border-b border-border/70 px-6 pb-5 pt-6">
-                        <div className="flex items-center gap-3">
-                            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-aha-red text-white shadow-sm">
-                                <Car className="h-5 w-5" strokeWidth={2.2} />
-                            </span>
-                            <div>
-                                <h1 className="text-xl font-bold leading-tight">Kaza Simülatörü</h1>
-                                <p className="text-[12.5px] font-light leading-relaxed text-muted-foreground">Fizik tabanlı canlandırma · kroki · video · {SURUM}</p>
-                            </div>
-                        </div>
+                        <h1 className="sr-only">Cumhuriyet Avukatları — Kaza Simülatörü</h1>
+                        <MarkaBasligi />
+                        <p className="mt-3 text-[12.5px] font-light leading-relaxed text-muted-foreground">
+                            Trafik kazasını gerçek yol üzerinde fizik tabanlı canlandırın; hız, kaçınılabilirlik ve kusur ön değerlendirmesini görün; kroki, fotoğraf ve video alın.
+                        </p>
 
                         <div className="relative mt-5">
                             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -137,6 +135,19 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle }: Baslang
                     </div>
 
                     <div className="ince-kaydirma min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                        <ol className="mb-5 grid grid-cols-3 gap-2">
+                            {[
+                                { no: 1, baslik: 'Konum', metin: 'Haritadan seçin veya hazır senaryo açın' },
+                                { no: 2, baslik: 'Taraflar', metin: 'Hız, fren izi, yön ve ihlalleri girin' },
+                                { no: 3, baslik: 'Sonuç', metin: 'Canlandırın; kroki, rapor ve video alın' },
+                            ].map((a) => (
+                                <li key={a.no} className="rounded-2xl bg-muted/70 p-3">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-aha-red text-[11px] font-bold text-white">{a.no}</span>
+                                    <div className="mt-1.5 text-[12.5px] font-bold">{a.baslik}</div>
+                                    <div className="text-[11px] font-light leading-snug text-muted-foreground">{a.metin}</div>
+                                </li>
+                            ))}
+                        </ol>
                         <div className="mb-3 flex items-center justify-between">
                             <h2 className="text-[13px] font-bold uppercase tracking-[0.08em]">Hazır senaryolar</h2>
                             <Rozet renk="yesil"><WifiOff className="h-3 w-3" /> İnternetsiz</Rozet>
@@ -169,10 +180,17 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle }: Baslang
                                 Çevrimdışısınız: harita ve gerçek yol verisi yüklenemez; hazır senaryolar ve tüm hesaplamalar çalışmaya devam eder.
                             </p>
                         )}
-                        <p className={cn('mt-5 text-[11px] font-light leading-relaxed text-muted-foreground')}>
-                            Bilgilendirme ve eğitim amaçlıdır; basitleştirilmiş fizik modellerine dayanır. Sonuçlar bilirkişi raporu, hukuki görüş veya delil niteliği taşımaz.
-                            Tüm hesaplamalar tarayıcınızda yapılır; veri sunucuya gönderilmez.
-                        </p>
+                        <div className="mt-5 rounded-2xl border border-aha-red/25 bg-aha-red/[0.04] p-4">
+                            <div className="flex items-center gap-2 text-[12.5px] font-bold text-aha-red">
+                                <HeartHandshake className="h-4 w-4" /> Meslektaşlarımızın faydasına
+                            </div>
+                            <p className="mt-1.5 text-[12px] leading-relaxed text-foreground/80">
+                                Bu uygulama bir <b>simülatördür</b>; <b>hukuki görüş, bilirkişi raporu veya delil</b> niteliği taşımaz.
+                                Dosya hazırlığında olayı görselleştirmek ve ön değerlendirme yapmak için ücretsiz sunulmuştur.
+                            </p>
+                            <button type="button" onClick={uyariAc} className="mt-2 text-[12px] font-semibold text-aha-red underline-offset-2 hover:underline">Yasal uyarının tamamını okuyun →</button>
+                        </div>
+                        <Altbilgi className="mt-4" />
                     </div>
                 </div>
             </aside>
