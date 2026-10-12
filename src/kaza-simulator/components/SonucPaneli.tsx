@@ -34,7 +34,7 @@ function TarafBlogu({ s, ad }: { s: TarafSonuc; ad: string }) {
             <div className="mb-2 flex items-center gap-2.5">
                 <TarafNokta id={s.id} className="h-7 w-7" />
                 <div className="min-w-0 flex-1 truncate text-[13.5px] font-bold">{ad}</div>
-                <Rozet className="shrink-0" renk={siddet.ad === 'Hafif' ? 'yesil' : siddet.ad === 'Orta' ? 'sari' : 'kirmizi'}>{siddet.ad}</Rozet>
+                <Rozet className="shrink-0" renk={siddet.ad === 'Hafif' ? 'yesil' : siddet.ad === 'Orta' ? 'sari' : 'kirmizi'}>ΔV: {siddet.ad.toLocaleLowerCase('tr-TR')}</Rozet>
             </div>
             <div className="divide-y divide-border/60">
                 <Satir ad="Kaza öncesi hız" deger={`${kmh(s.v0)} km/s`} />

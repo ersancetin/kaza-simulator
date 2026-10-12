@@ -5,7 +5,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { HeartHandshake, Scale, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { ANA_UYARI, GIZLILIK_NOTU, KISA_UYARI, MARKA, SURUM, YASAL_UYARI } from '../data/kazaData.ts';
+import { ANA_UYARI, GIZLILIK_NOTU, KISA_UYARI, MARKA, YASAL_UYARI } from '../data/kazaData.ts';
 import { guvenliKaydet, guvenliYukle } from '../lib/depo.ts';
 import { Buton, cn } from './ui/temel.tsx';
 
@@ -17,7 +17,7 @@ export function MarkaBasligi({ kucuk, className }: { kucuk?: boolean; className?
             <span className="flex min-w-0 flex-col leading-tight">
                 <strong className={cn('truncate font-bold tracking-[0.12em] text-foreground', kucuk ? 'text-[10.5px]' : 'text-[11.5px]')}>{MARKA.kurumBuyuk}</strong>
                 <span className={cn('truncate font-semibold text-aha-red', kucuk ? 'text-[14px]' : 'text-[17px]')}>
-                    {MARKA.uygulama} <span className="text-[10.5px] font-medium text-muted-foreground">{SURUM}</span>
+                    {MARKA.uygulama}
                 </span>
             </span>
         </div>
@@ -114,7 +114,7 @@ export function UyariPenceresi({ acik, setAcik }: { acik: boolean; setAcik: (a: 
                             {[
                                 { ikon: HeartHandshake, baslik: 'Meslektaş faydasına', metin: 'Ücretsiz, açık bir ön hazırlık aracı' },
                                 { ikon: Scale, baslik: 'Hukuki görüş değildir', metin: 'Bilirkişi raporu, kusur tespiti yerine geçmez' },
-                                { ikon: ShieldCheck, baslik: 'Veri toplanmaz', metin: 'Her şey tarayıcınızda kalır' },
+                                { ikon: ShieldCheck, baslik: 'Kişisel veri toplanmaz', metin: 'Hesaplamalar tarayıcınızda yapılır' },
                             ].map(({ ikon: Ikon, baslik, metin }) => (
                                 <div key={baslik} className="flex items-center gap-3 rounded-2xl bg-muted/70 px-3 py-2 sm:block sm:p-3">
                                     <Ikon className="h-4 w-4 shrink-0 text-aha-red" />

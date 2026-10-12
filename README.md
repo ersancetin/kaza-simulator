@@ -91,7 +91,7 @@ GitHub Pages için iş akışı `NEXT_PUBLIC_BASE_PATH=/kaza-simulator` ile derl
 
 Uygulama kusur **tespit etmez**. Kullanıcının işaretlediği olası ihlaller ve hız bilgisine göre, ilgili
 olabilecek KTK hükümleri esas alınarak 8'lik dilimde bir **olası dağılım** gösterir. Etiketler bu nedenle
-"Asli kusur ihtimali", "Tali kusur ihtimali", "Kusur görünmüyor" biçimindedir; gerekçeler "… söz konusu
+"Asli kusur ihtimali", "Tali kusur ihtimali", "Kusur ihtimali görünmüyor" biçimindedir; gerekçeler "… söz konusu
 olabilir (KTK m.x ile ilgili olabilir)" diliyle yazılır. Madde atıfları örneklendirme amaçlıdır; güncel ve
 bağlayıcı metin için mevzuat.gov.tr'ye başvurulmalıdır.
 
@@ -140,6 +140,6 @@ tazminat değerlendirmesi uzman bilirkişiler ve yetkili yargı mercilerince yap
 tutulamaz.
 
 Uyarı, ilk girişte okunup onaylanan pencerede, uygulama altbilgisinde ve tüm çıktılarda (fotoğraf, video,
-kroki, A4 rapor) yer alır. Üyelik yok, çerez yok, veri toplanmaz.
+kroki, A4 rapor) yer alır. Üyelik yok, çerez yok, kişisel veri toplanmaz; harita, adres arama ve yol verisi için yalnızca arama metni ve seçilen konum OpenStreetMap hizmetlerine iletilir.
 
 Yol verileri © [OpenStreetMap](https://www.openstreetmap.org/copyright) katkıcıları.

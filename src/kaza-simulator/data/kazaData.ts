@@ -6,7 +6,6 @@ import type {
     SablonSenaryo, SimSonuc, TarafId, Vec2, Yol, YolSinifi, Yuzey, GenelKosullar,
 } from '../types/kazaTypes.ts';
 
-export const SURUM = 'v3.4';
 
 // ---- Kurumsal kimlik ve yasal metinler ----
 const TABAN_YOL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_PATH) || '';
@@ -53,7 +52,7 @@ export const CARPISMA_TIP_ADI: Readonly<Record<SimSonuc['tip'], string>> = {
     yaya: 'Yayaya çarpma',
 };
 
-export const GIZLILIK_NOTU = 'Üyelik yok, çerez yok, veri toplanmaz — tüm hesaplamalar tarayıcınızda yapılır, girdileriniz hiçbir sunucuya gönderilmez.';
+export const GIZLILIK_NOTU = 'Üyelik yok, çerez yok — kişisel veri toplamıyoruz; hesaplamalar tarayıcınızda yapılır. Harita, adres arama ve yol verisi için yalnızca arama metni ve seçilen konum OpenStreetMap hizmetlerine iletilir.';
 
 // Lastik–yol tipik kayma sürtünme katsayıları (kilitli tekerlek)
 export const YUZEYLER: readonly Yuzey[] = [

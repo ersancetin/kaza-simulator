@@ -5,7 +5,7 @@
 
 import type { ReactNode } from 'react';
 import {
-    ANA_UYARI, ARAC_TURLERI, AYDINLATMA_ADI, CARPISMA_TIP_ADI, GIZLILIK_NOTU, HAVA_ADI, ISIK_ADI, MARKA, MEVZUAT_KAYNAGI, SURUM, TARAF_RENK, YASAL_UYARI,
+    ANA_UYARI, ARAC_TURLERI, AYDINLATMA_ADI, CARPISMA_TIP_ADI, GIZLILIK_NOTU, HAVA_ADI, ISIK_ADI, MARKA, MEVZUAT_KAYNAGI, TARAF_RENK, YASAL_UYARI,
 } from '../data/kazaData.ts';
 import { hukumListesi } from '../data/ktkMetinleri.ts';
 import { siddetEtiketi } from '../lib/physics.ts';
@@ -111,7 +111,6 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                 <div className="flex flex-col justify-center gap-[1mm] border-l border-white/25 px-[5mm] text-[7.5pt] leading-tight">
                     <div><span className="opacity-70">Rapor no</span><br /><b className="text-[9pt]">{raporNo}</b></div>
                     <div><span className="opacity-70">Tarih</span><br /><b className="text-[9pt]">{simdi.toLocaleDateString('tr-TR')} {simdi.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</b></div>
-                    <div><span className="opacity-70">Sürüm</span><br /><b className="text-[9pt]">{SURUM}</b></div>
                 </div>
             </header>
 

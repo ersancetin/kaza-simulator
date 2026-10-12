@@ -39,7 +39,7 @@ function tarafPuani(g: KusurGirdi): { toplam: number; gerekceler: KusurGerekce[]
 
 function etiket(oran: number): KusurTaraf['etiket'] {
     // Tespit değil, girdilere göre olasılık ifadesi
-    if (oran === 0) return { ad: 'Kusur görünmüyor', sinif: 'kusursuz' };
+    if (oran === 0) return { ad: 'Kusur ihtimali görünmüyor', sinif: 'kusursuz' };
     if (oran > 0.5) return { ad: 'Asli kusur ihtimali', sinif: 'asli' };
     if (oran === 0.5) return { ad: 'Eşit kusur ihtimali', sinif: 'tali' };
     return { ad: 'Tali kusur ihtimali', sinif: 'tali' };
