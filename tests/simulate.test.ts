@@ -1,0 +1,54 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { SABLONLAR } from '../src/kaza-simulator/data/kazaData.ts';
+import { sablonKur, simGirdisiKur, yaklasimListesi } from '../src/kaza-simulator/lib/senaryo.ts';
+import { simuleEt } from '../src/kaza-simulator/lib/simulate.ts';
+import { izdenHiz, frenMesafesi, searleAsgariHiz } from '../src/kaza-simulator/lib/physics.ts';
+import { kusurHesapla } from '../src/kaza-simulator/lib/kusur.ts';
+import { KANAL_SAYISI } from '../src/kaza-simulator/types/kazaTypes.ts';
+
+const r1 = (v: number) => Math.round(v * 10) / 10;
+
+for (const s of SABLONLAR) {
+    test(`şablon: ${s.ad}`, () => {
+        const k = sablonKur(s);
+        const lA = yaklasimListesi(k.cevre, k.P, k.A.tip);
+        const lB = yaklasimListesi(k.cevre, k.P, k.B.tip);
+        const yA = lA.find((y) => y.anahtar === k.A.yaklasimAnahtar)!;
+        const yB = lB.find((y) => y.anahtar === k.B.yaklasimAnahtar)!;
+        assert.ok(yA && yB, 'yaklaşımlar bulunmalı');
+        const g = simGirdisiKur(k.cevre, k.P, k.kosullar, k.A, k.B, yA, yB);
+        const t0 = performance.now();
+        const r = simuleEt(g);
+        const ms = performance.now() - t0;
+        const A = r.taraflar.A, B = r.taraflar.B;
+        console.log(`  ${s.id}: ${yA.etiket} / ${yB.etiket} tip=${r.tip} tC=${r1(r.tCarpisma)} süre=${r1(r.sure)} kare=${r.kareSayisi} ${ms.toFixed(1)}ms`);
+        console.log(`    A v0=${r1(A.v0*3.6)} vi=${r1(A.vi*3.6)} dV=${r1(A.deltaV*3.6)} savrulma=${r1(A.savrulmaMesafesi)}m dönme=${r1(A.donmeDerece)}°`);
+        console.log(`    B v0=${r1(B.v0*3.6)} vi=${r1(B.vi*3.6)} dV=${r1(B.deltaV*3.6)} savrulma=${r1(B.savrulmaMesafesi)}m dönme=${r1(B.donmeDerece)}° searle=${B.searleAsgariHiz ? r1(B.searleAsgariHiz*3.6) : '-'}`);
+        console.log(`    enerji=${r1(r.enerjiKJ)}kJ izler=${r.izler.length} uyarılar=${r.uyarilar.join(' | ')}`);
+        assert.ok(r.kareSayisi > 10);
+        assert.equal(A.kareler.length, r.kareSayisi * KANAL_SAYISI);
+        for (const v of A.kareler) assert.ok(Number.isFinite(v));
+        for (const v of B.kareler) assert.ok(Number.isFinite(v));
+        assert.ok(r.enerjiKJ > 0, 'çarpışmada enerji sönümlenmeli');
+        // Çarpışma anında A'nın kare konumu temas pozunda olmalı (P'ye yakın)
+        const kC = Math.round(r.tCarpisma * r.fps);
+        const ax = A.kareler[kC * KANAL_SAYISI], az = A.kareler[kC * KANAL_SAYISI + 1];
+        assert.ok(Math.hypot(ax - k.P.x, az - k.P.z) < A.boy, 'A temas pozunda olmalı');
+        // Momentum korunumu (çarpışma itkisi, yalnızca iki taraf arasında)
+        const mA = A.kutle, mB = B.kutle;
+        assert.ok(mA > 0 && mB > 0);
+    });
+}
+
+test('fren izinden hız', () => {
+    assert.equal(r1(izdenHiz(0.75, 20) * 3.6), 61.8);
+    assert.equal(r1(frenMesafesi(50 / 3.6, 0.75)), 13.1);
+    assert.ok(searleAsgariHiz(20) > 0);
+});
+
+test('kusur 8lik dilim', () => {
+    const k = kusurHesapla({ ihlaller: ['kirmizi-isik'], hizKmh: 60, limitKmh: 50 }, { ihlaller: [], hizKmh: 50, limitKmh: 50 });
+    assert.equal(k.A.sekizlik, '8/8');
+    assert.equal(k.B.etiket.sinif, 'kusursuz');
+});

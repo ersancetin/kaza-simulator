@@ -1,7 +1,7 @@
 name: GitHub Pages Yayını
 
-# main dalındaki içeriği gh-pages dalına aynalar;
-# GitHub Pages siteyi gh-pages dalından yayınlar.
+# main dalını statik olarak derler (Next.js output: export) ve out/
+# içeriğini gh-pages dalına yayınlar; Pages siteyi gh-pages dalından sunar.
 on:
   push:
     branches: [main]
@@ -19,13 +19,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Derle
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /kaza-simulator
+          NEXT_TELEMETRY_DISABLED: 1
       - name: gh-pages dalına yayınla
         run: |
+          cd out
+          touch .nojekyll
+          git init -q -b gh-pages
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan gh-pages
-          git rm -rf --cached .github >/dev/null 2>&1 || true
-          rm -rf .github
           git add -A
-          git commit -m "Pages yayını: ${GITHUB_SHA}"
-          git push -f origin gh-pages
+          git commit -q -m "Pages yayını: ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages

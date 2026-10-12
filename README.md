@@ -1,31 +1,90 @@
-# Kaza Simülatörü
+# Kaza Simülatörü v3
 
-Türkiye haritasında seçilen konumda trafik kazası canlandırması ve ön analiz aracı.
-Tamamen statiktir; GitHub Pages üzerinde sunucu ve API anahtarı gerektirmeden çalışır.
+Tarayıcıda çalışan, fizik tabanlı trafik kazası canlandırma ve ön analiz aracı.
+GateOS In-Browser Micro-App kılavuzuna (`GATEOS-APP-DEV-MANUAL`) göre yeniden yazılmıştır:
+Next.js 16 (statik dışa aktarım) · React 19 · strict TypeScript · Tailwind CSS v4 (OKLCH) ·
+Radix UI · Lucide · Three.js.
 
 ## Özellikler
 
-- **Konum seçimi** — Leaflet + OpenStreetMap ile Türkiye'de arama (Nominatim) veya haritaya tıklama.
-- **Gerçek yol geometrisi** — Seçilen noktanın çevresindeki yollar ve binalar Overpass API'den alınır ve Three.js ile 3B sahneye dönüştürülür (veri alınamazsa temsili kavşak kullanılır).
-- **3B kaza canlandırması** — İki araç için seyir → reaksiyon → frenleme → çarpışma → savrulma evreleri; ileri-geri sarılabilir zaman çubuğu, araç takip kamerası, kuşbakışı görünüm.
-- **Hız tespiti** — Fren izi uzunluğundan hız hesabı: `v = √(v_son² + 2µgd)` (yüzeye göre sürtünme katsayısı, isteğe bağlı iz sonu/EES hızı). Fren mesafesi, reaksiyon dâhil duruş mesafesi, çarpma anı hızı ve ΔV hesaplanır.
-- **Kusur oranı değerlendirmesi** — 2918 sayılı KTK (özellikle m.84'teki asli kusur halleri) esas alınarak ağırlıklandırılmış puanlama; %'lik ve 8'lik dilim (ör. 6/8 – 2/8) gösterimi, gerekçeli döküm, yazdırılabilir rapor.
+- **İnternetsiz şablon senaryolar** — ışıklı kavşakta yandan çarpma, DUR levhalı T kavşak,
+  kırsal yolda kafa kafaya, duran araca arkadan çarpma, yaya geçidinde yayaya çarpma.
+- **Gerçek konum (isteğe bağlı)** — haritadan nokta seçilince OpenStreetMap yol, bina, ağaç,
+  ışık/levha verisi alınır; yanıtlar IndexedDB'de önbelleklenir (aynı bölge ikinci kez anında açılır).
+- **Fizik motoru** (`lib/simulate.ts`)
+  - Çarpışma öncesi: seyir → algılama/tepki → frenleme (µg), şerit ortasından, köşeleri yumuşatılmış güzergâh.
+  - Çarpışma: 2B katı cisim itki modeli — doğrusal + açısal momentum korunumu, temas noktası moment kolu,
+    çarpma katsayısı, Coulomb temas sürtünmesi. Çarpışma tipi (yandan / kafa kafaya / arkadan / sıyırma)
+    ve çarpılan bölgeye göre doğru temas pozu: çarpışma tam işaretlenen noktada olur.
+  - Çarpışma sonrası: boyuna/yanal lastik sürtünmesi (sürtünme dairesi), sapma sönümü, ikincil temaslar
+    (OBB/SAT), direk/ağaç/bariyer gibi sabit engeller, devrilen iki tekerli.
+  - Yaya: Searle fırlatma modeli (sarılma / ileri savrulma), düşme ve kayma.
+  - Sonuç 60 kare/sn kare dizisi: zaman çubuğunda ileri-geri sarma anlık ve tutarlı.
+- **Raporlama** — fren izinden hız, çarpma hızı, ΔV ve şiddet, duruş mesafesi, algılama noktası,
+  **kaçınılabilirlik** (hız sınırında seyretseydi durabilir miydi), Searle ters hesabı, sönümlenen enerji,
+  KTK temelli 8'lik dilim kusur ön değerlendirmesi.
+- **Görseller** — profil ekstrüzyonlu araç gövdeleri (otomobil, SUV, pikap, panelvan, kamyon, otobüs, TIR,
+  motosiklet, bisiklet, traktör), eklemli yürüyen yaya, Türkiye standardında levhalar (DUR, yol ver, ana yol,
+  hız sınırı, sollama yasağı, park yasağı, girişi olmayan yol, yaya/okul geçidi, ada etrafında dönünüz),
+  kaldırım, bordür, kavşakta kesilen şerit çizgileri, dur çizgileri, zebra, pencereli binalar, lastik izleri,
+  enkaz ve çarpışma parlaması.
+- **Kameralar** — serbest, kuşbakışı, A/B takip, A/B sürücü gözü (görüş analizi).
+- **Çıktılar (tamamen tarayıcıda)** — bilgi katmanlı veya sade fotoğraf (PNG), ölçekli kaza krokisi
+  (kuzey oku, ölçek çubuğu, A1/B1 çarpışma konumu, A2/B2 son duruş), video (MP4/WebM, 720p/1080p,
+  MediaRecorder), A4 rapor yazdır / PDF.
 
-## Dosyalar
+## Kılavuz uyumu
 
-| Dosya | Görev |
+| Kural | Uygulama |
 |---|---|
-| `index.html` | İki ekranlı arayüz (harita + simülasyon) |
-| `js/map.js` | Leaflet haritası, Nominatim arama, Overpass veri çekme |
-| `js/sim3d.js` | Three.js sahnesi, kapalı-form kinematik, fren izleri, çarpışma |
-| `js/physics.js` | Kaza rekonstrüksiyon formülleri |
-| `js/kusur.js` | KTK temelli kusur puanlama motoru |
-| `js/main.js` | Akış, formlar, rapor ve yazdırma |
+| Sıfır sunucu yükü | `output: 'export'` — yalnızca statik dosyalar; tüm hesap, çizim, video tarayıcıda. |
+| Veritabanı bağımsızlığı | Tercihler yalnızca `localStorage`'da, SHA-256 bütünlük karmalı (`lib/depo.ts`); OSM önbelleği IndexedDB. |
+| Sıfır API bağımlılığı | Uygulama şablonlarla internetsiz tam çalışır. Harita/OSM yalnızca kullanıcı konum seçince, doğrudan tarayıcıdan istenir (zorunlu değil, telemetri yok). |
+| Taşınabilirlik | 3B motor sahne açılınca yüklenir; sonrasında bağlantı kopsa da çalışmaya devam eder. |
+| Güvenlik | `eval`, `new Function`, `dangerouslySetInnerHTML`, dış `<script>`/CDN yok; font npm paketiyle (`@fontsource-variable/montserrat`). Tüm dinleyiciler unmount'ta temizlenir. |
+| Görsel kimlik | AHA Red / antrasit / gri OKLCH tokenları, Montserrat, kapsül düğmeler, `rounded-2xl/3xl` kartlar, kırmızı odak halkası. |
+| Erişilebilirlik | Space oynat/duraklat · ←/→ 0,1 sn (Shift 1 sn) · Home/End · 1–6 kamera · P panel · F tam ekran · Esc iptal; mobilde panel ve zaman çubuğu kaydırma jestleri. |
+| Auth Shield | `<KazaClient isProtected isAuthenticated onRequestLogin />` — oturumsuz kullanıcı önizler, eylemde bordo kilit modalı açılır. |
+
+## Klasör düzeni
+
+```text
+src/kaza-simulator/
+├── types/kazaTypes.ts        # Tüm tipler
+├── data/kazaData.ts          # Yüzeyler, araç türleri, ihlaller, levha kataloğu, şablon senaryolar
+├── hooks/
+│   ├── useKazaEngine.ts      # Presenter hook: durum, iş mantığı, dışa aktarım, yetki kalkanı
+│   ├── useKlavyeKisayollari.ts
+│   └── useKaydirma.ts        # Dokunmatik kaydırma
+├── lib/                      # Saf motorlar (çizimden bağımsız)
+│   ├── simulate.ts  physics.ts  kusur.ts  geometry.ts  senaryo.ts
+│   ├── osm.ts  depo.ts  hud.ts  levhaCizim.ts  video.ts
+│   └── three/  sahneMotoru.ts  cevreKur.ts  modeller.ts  dokular.ts
+├── components/
+│   ├── KazaClient.tsx        # Ana istemci arayüzü
+│   ├── KazaCard.tsx          # Taraf kartı
+│   ├── KazaSettings.tsx      # Koşullar ve çarpışma kurgusu
+│   └── …                     # Harita, sahne, palet, sonuç, zaman çubuğu, dışa aktarım, rapor, kilit
+└── README.md
+```
+
+## Geliştirme
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm test           # fizik/kusur motoru testleri (node:test)
+npm run typecheck
+npm run build      # out/ — herhangi bir statik barındırıcıya kopyalanabilir
+```
+
+GitHub Pages için iş akışı `NEXT_PUBLIC_BASE_PATH=/kaza-simulator` ile derler ve `out/` içeriğini
+`gh-pages` dalına yayınlar.
 
 ## Uyarı
 
-Bu araç **yalnızca bilgilendirme ve eğitim amaçlıdır**; basitleştirilmiş fizik
-modellerine dayanır. Ürettiği sonuçlar hukuki görüş, bilirkişi raporu, kusur
-tespiti veya delil niteliği **taşımaz**; resmî ya da adli işlemlerde kullanılamaz.
-Mevzuat atıfları örneklendirme amaçlıdır; bağlayıcı metin için resmî kaynaklara
-başvurulmalıdır.
+Bu araç **yalnızca bilgilendirme ve eğitim amaçlıdır**; basitleştirilmiş fizik modellerine dayanır.
+Ürettiği sonuçlar hukuki görüş, bilirkişi raporu, kusur tespiti veya delil niteliği **taşımaz**; resmî ya da
+adli işlemlerde kullanılamaz. Mevzuat atıfları örneklendirme amaçlıdır.
+
+Yol verileri © [OpenStreetMap](https://www.openstreetmap.org/copyright) katkıcıları.
