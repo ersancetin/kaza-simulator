@@ -140,6 +140,6 @@ tazminat değerlendirmesi uzman bilirkişiler ve yetkili yargı mercilerince yap
 tutulamaz.
 
 Uyarı, ilk girişte okunup onaylanan pencerede, uygulama altbilgisinde ve tüm çıktılarda (fotoğraf, video,
-kroki, A4 rapor) yer alır. Üyelik yok, çerez yok, kişisel veri toplanmaz; harita, adres arama ve yol verisi için yalnızca arama metni ve seçilen konum OpenStreetMap hizmetlerine iletilir.
+kroki, A4 rapor) yer alır. Kişisel veri toplanmaz; harita, adres arama ve yol verisi için yalnızca arama metni ve seçilen konum OpenStreetMap hizmetlerine iletilir.
 
 Yol verileri © [OpenStreetMap](https://www.openstreetmap.org/copyright) katkıcıları.

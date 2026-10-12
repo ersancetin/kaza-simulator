@@ -128,7 +128,7 @@ export function UyariPenceresi({ acik, setAcik }: { acik: boolean; setAcik: (a: 
                         <YasalUyariMetni kompakt />
                     </div>
                     <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border/70 bg-white/95 px-5 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
-                        <span className="hidden text-[11.5px] text-muted-foreground sm:inline">{GIZLILIK_NOTU.split(' — ')[0]}</span>
+                        <span className="hidden text-[11.5px] text-muted-foreground sm:inline">{GIZLILIK_NOTU.split(';')[0]}</span>
                         <Buton tur="birincil" className="justify-center" onClick={onayla}>
                             {ilk ? 'Okudum, anladım' : 'Kapat'}
                         </Buton>
