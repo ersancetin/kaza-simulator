@@ -9,8 +9,8 @@ import {
     TriangleAlert, X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ISARET_ADI } from '../data/kazaData.ts';
-import { Altbilgi, MarkaBasligi, UyariPenceresi } from './Marka.tsx';
+import { ANA_UYARI, ISARET_ADI, MARKA } from '../data/kazaData.ts';
+import { Altbilgi, MarkaBasligi, SimulasyonUyarisi, UyariPenceresi } from './Marka.tsx';
 import { tarafAdi, useKazaEngine, type PanelSekmesi } from '../hooks/useKazaEngine.ts';
 import { useKaydirma } from '../hooks/useKaydirma.ts';
 import { useKlavyeKisayollari } from '../hooks/useKlavyeKisayollari.ts';
@@ -98,21 +98,27 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
             {sahneAcildi && (
                 <div className={cn('fixed inset-0 flex flex-col bg-background', m.ekran !== 'sahne' && 'invisible')} aria-hidden={m.ekran !== 'sahne'}>
                     {/* Üst bar */}
-                    <header className="z-20 flex h-16 shrink-0 items-center gap-2 border-b border-border/80 bg-white px-3 md:gap-3 md:px-5">
+                    <header className="z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/80 bg-white px-2.5 md:h-16 md:gap-3 md:px-5">
                         <Buton tur="hayalet" boy="ikon" aria-label="Haritaya dön" title="Haritaya / senaryolara dön" onClick={m.baslangicaDon}>
                             <ArrowLeft className="h-5 w-5" />
                         </Buton>
                         <MarkaBasligi kucuk className="hidden shrink-0 sm:flex" />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={MARKA.logo} alt="" width={30} height={30} className="h-[30px] w-[30px] shrink-0 rounded-full shadow-sm sm:hidden" />
                         <div className="min-w-0 flex-1 border-border/80 sm:border-l sm:pl-3">
                             <h1 className="truncate text-[13.5px] font-bold leading-tight sm:hidden">Kaza Simülatörü</h1>
                             <div className="truncate text-[12px] font-light text-muted-foreground">{m.baslik}</div>
                         </div>
-                        <Buton tur="hayalet" boy="sm" className="hidden text-muted-foreground lg:inline-flex" onClick={() => setUyariAcik(true)} title="Yasal uyarı">
-                            <Scale className="h-4 w-4" /> Simülasyondur, bilirkişi raporu değildir
-                        </Buton>
-                        <Buton tur="hayalet" boy="ikon" className="lg:hidden" aria-label="Yasal uyarı" onClick={() => setUyariAcik(true)}>
-                            <Scale className="h-4 w-4" />
-                        </Buton>
+                        <span className="hidden lg:block">
+                            <Buton tur="hayalet" boy="sm" className="text-aha-red" onClick={() => setUyariAcik(true)} title="Yasal uyarı">
+                                <Scale className="h-4 w-4" /> {ANA_UYARI.kisa}
+                            </Buton>
+                        </span>
+                        <span className="hidden md:block lg:hidden">
+                            <Buton tur="hayalet" boy="ikon" aria-label="Yasal uyarı" onClick={() => setUyariAcik(true)}>
+                                <Scale className="h-4 w-4" />
+                            </Buton>
+                        </span>
                         <span className="hidden md:block">
                             <Buton tur="ikincil" boy="sm" onClick={() => setPanelAcik((a) => !a)} title="Paneli aç/kapat (P)">
                                 {panelAcik ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />} Panel
@@ -120,12 +126,13 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                         </span>
                         <DisaAktarMenusu senaryoKaydet={m.senaryoKaydet} baglantiKopyala={() => void m.baglantiKopyala()} senaryoAc={(f) => void m.senaryoAc(f)} sonucVar={!!m.sonuc} fotoIndir={m.fotoIndir} krokiIndir={m.krokiIndir} videoKaydet={m.videoKaydet} yazdir={m.yazdir} videoHata={m.video.hata} />
                     </header>
+                    <SimulasyonUyarisi tur="serit" className="z-20 shrink-0 border-b border-aha-red/15 md:hidden" tikla={() => setUyariAcik(true)} />
 
                     <div className="relative flex min-h-0 flex-1">
                         {/* Sol panel / mobil alt sayfa */}
                         <aside
                             className={cn(
-                                'fixed inset-x-0 bottom-0 z-30 flex h-[64vh] flex-col rounded-t-3xl border-t border-border/80 bg-background shadow-2xl transition-transform duration-300',
+                                'fixed inset-x-0 bottom-0 z-30 flex h-[56dvh] flex-col rounded-t-3xl border-t border-border/80 bg-background shadow-2xl transition-transform duration-300',
                                 'md:static md:z-auto md:h-auto md:w-[400px] md:shrink-0 md:translate-y-0 md:rounded-none md:border-r md:border-t-0 md:shadow-none',
                                 panelAcik ? 'translate-y-0' : 'translate-y-[calc(100%-60px)] md:hidden',
                             )}
@@ -134,19 +141,19 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                 <span className="h-1.5 w-12 rounded-full bg-border" />
                             </div>
                             <Tabs.Root value={m.sekme} onValueChange={(v) => m.setSekme(v as PanelSekmesi)} className="flex min-h-0 flex-1 flex-col">
-                                <Tabs.List className="mx-4 mt-1 flex gap-1 rounded-full bg-muted p-1 md:mt-4" aria-label="Panel bölümleri">
+                                <Tabs.List className="mx-3 mt-0.5 flex gap-1 rounded-full bg-muted p-1 md:mx-4 md:mt-4" aria-label="Panel bölümleri">
                                     {SEKMELER.map((s) => (
                                         <Tabs.Trigger key={s.deger} value={s.deger}
-                                            className="flex-1 rounded-full px-3 py-2 text-[13px] font-semibold text-muted-foreground outline-none transition data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm focus-visible:ring-2 focus-visible:ring-aha-red/30">
+                                            className="flex-1 rounded-full px-3 py-1.5 text-[13px] font-semibold md:py-2 text-muted-foreground outline-none transition data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm focus-visible:ring-2 focus-visible:ring-aha-red/30">
                                             {s.etiket}
                                             {s.deger === 'sonuc' && m.sonuc && <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-aha-red align-middle" />}
                                         </Tabs.Trigger>
                                     ))}
                                 </Tabs.List>
 
-                                <div className="ince-kaydirma min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-4">
+                                <div className="ince-kaydirma min-h-0 flex-1 overflow-y-auto px-3 pb-6 pt-3 md:px-4 md:pt-4">
                                     <Tabs.Content value="sahne" className="space-y-3 outline-none">
-                                        <Kart className="p-4">
+                                        <Kart className="p-3.5 md:p-4">
                                             <Baslik sag={m.cevre?.kaynak === 'sablon' ? <Rozet renk="yesil">Şablon</Rozet> : m.cevre ? <Rozet renk="mavi">OSM</Rozet> : null}>Çarpışma noktası</Baslik>
                                             <Buton tur={m.duzenleme.tur === 'nokta' ? 'birincil' : 'ikincil'} className="w-full justify-center" onClick={m.noktaSecimiBaslat}>
                                                 {m.duzenleme.tur === 'nokta' ? <><X className="h-4 w-4" /> Seçimi iptal et</> : <><Crosshair className="h-4 w-4" /> Sahneden yeniden seç</>}
@@ -157,7 +164,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                         <KazaSettings kosullar={m.kosullar} guncelle={m.kosulGuncelle} katilimcilar={m.katilimcilar} ihlalEkle={(id, ihlal) => m.katilimciGuncelle(id, { ihlaller: [...m.katilimcilar[id].ihlaller, ihlal] })} />
 
                                         {m.cevre?.kaynak === 'osm' && aYolu && (
-                                            <Kart className="p-4">
+                                            <Kart className="p-3.5 md:p-4">
                                                 <Baslik>Konumdan okunan veriler</Baslik>
                                                 <p className="text-[12.5px] leading-relaxed">
                                                     <b>{aYolu.yolAdi}</b>: {aYolu.seritSayisi} şerit{aYolu.tekYon ? ', tek yön' : ''}
@@ -171,13 +178,13 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                             </Kart>
                                         )}
 
-                                        <Kart className="p-4">
+                                        <Kart className="p-3.5 md:p-4">
                                             <Baslik>Levha ve öge ekle</Baslik>
                                             <p className="-mt-1 mb-3 text-[12px] leading-relaxed text-muted-foreground">Seçip sahneye tıklayın; levhalar en yakın yolun kenarına, trafiğe dönük dikilir. Ağaç, direk, bariyer gibi ögeler savrulan araç için engeldir.</p>
                                             <IsaretPaleti duzenleme={m.duzenleme} sec={m.isaretModu} elleIsaretler={m.elleIsaretler} dondur={m.isaretDondur} sil={m.isaretSil} />
                                         </Kart>
 
-                                        <Kart className="p-4">
+                                        <Kart className="p-3.5 md:p-4">
                                             <Baslik>Yol çiz</Baslik>
                                             {cizim ? (
                                                 <div className="space-y-2.5">
@@ -206,7 +213,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                             )}
                                         </Kart>
 
-                                        <Kart className="p-4">
+                                        <Kart className="p-3.5 md:p-4">
                                             <Baslik>Görünüm</Baslik>
                                             <Onay secili={m.guzergah} degisti={m.setGuzergah}>Güzergâh çizgilerini göster</Onay>
                                             <div className="mt-2 lg:hidden">
@@ -233,7 +240,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                 </div>
                             </Tabs.Root>
 
-                            <div className="border-t border-border/80 bg-white/90 p-3 backdrop-blur md:p-4">
+                            <div className="border-t border-border/80 bg-white/90 px-3 py-2.5 backdrop-blur md:p-4">
                                 <Buton tur="birincil" className="w-full justify-center" onClick={hesapla} disabled={!m.cevre}>
                                     <Play className="h-4 w-4" fill="currentColor" /> {m.sonuc && !m.sonucEski ? 'Yeniden Hesapla' : 'Hesapla ve Canlandır'}
                                 </Buton>

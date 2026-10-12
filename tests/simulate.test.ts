@@ -90,3 +90,42 @@ test('senaryo bağlantısı gidiş-dönüş ve doğrulama', async () => {
     assert.equal(kotu.katilimcilar.A.tur, 'otomobil');
     assert.equal(await baglantiCoz('zbozuk!!'), null);
 });
+
+import { IHLALLER, YAYA_IHLALLERI } from '../src/kaza-simulator/data/kazaData.ts';
+
+test('KTK atıfları: olasılık dili ve m.84 bentleri', () => {
+    for (const i of [...IHLALLER, ...YAYA_IHLALLERI]) {
+        assert.match(i.dayanak, /ilgili olabilir|değerlendirilebilir/, i.id);
+        assert.doesNotMatch(i.dayanak, /asli kusur sayılan hâl'?$/, i.id);
+    }
+    // m.84 bentleri a–l: her bent en az bir ihlale eşlenmiş olmalı
+    const bentler = IHLALLER.map((i) => i.madde84 ?? '').join(' ');
+    for (const b of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']) assert.ok(new RegExp(`(^|[^a-z])${b}([^a-z]|$)`).test(bentler), `m.84/${b}`);
+    // Alkol ve yaya geçidi m.84'te sayılmaz
+    assert.equal(IHLALLER.find((i) => i.id === 'alkol')?.madde84, undefined);
+    assert.equal(IHLALLER.find((i) => i.id === 'yaya-gecidi')?.madde84, undefined);
+    const k = kusurHesapla({ ihlaller: ['kirmizi-isik'], hizKmh: 50, limitKmh: 50 }, { ihlaller: ['arkadan-carpma'], hizKmh: 50, limitKmh: 50 });
+    assert.equal(k.coklu84, true);
+    assert.equal(k.A.etiket.ad, 'Eşit kusur ihtimali');
+});
+
+import { KTK_HUKUMLERI, hukumGetir, hukumListesi } from '../src/kaza-simulator/data/ktkMetinleri.ts';
+
+test('KTK birebir alıntılar: her ihlal mevcut hükümlere bağlı', () => {
+    for (const i of [...IHLALLER, ...YAYA_IHLALLERI]) {
+        assert.ok(i.hukumler.length > 0, `${i.id} en az bir hükme bağlı olmalı`);
+        for (const h of i.hukumler) assert.ok(hukumGetir(h), `${i.id}: ${h} hükmü yok`);
+        // m.84 bendi işaretli ihlal, ilgili bendin alıntısını da içermeli
+        for (const b of (i.madde84 ?? '').split(/[^a-l]+/).filter(Boolean)) assert.ok(i.hukumler.includes(`84/${b}`), `${i.id}: 84/${b}`);
+        // Yaya ihlalleri m.84'e bağlanmaz (m.84 araç sürücülerini sayar)
+        if (YAYA_IHLALLERI.includes(i)) assert.ok(i.hukumler.every((h) => !h.startsWith('84/')), i.id);
+    }
+    for (const [a, h] of Object.entries(KTK_HUKUMLERI)) {
+        assert.ok(h.parcalar.length > 0 && h.parcalar.every((p) => p.trim().length > 3), a);
+        assert.ok(h.atif.startsWith('KTK m.'), a);
+    }
+    // Kanun sırasına göre tekrarsız liste
+    assert.deepEqual(hukumListesi(['84/a', '47/1-b', '84/a', '52/1-b', '51/1']).map((x) => x.anahtar), ['47/1-b', '51/1', '52/1-b', '84/a']);
+    const k = kusurHesapla({ ihlaller: [], hizKmh: 80, limitKmh: 50 }, { ihlaller: [], hizKmh: 50, limitKmh: 50 });
+    assert.deepEqual(k.A.gerekceler[0].hukumler, ['51/1', '52/1-b']);
+});

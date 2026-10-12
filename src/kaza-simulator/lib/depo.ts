@@ -1,6 +1,6 @@
 // Yerel depolama (Privacy-by-Design): veriler yalnızca bu tarayıcıda,
 // SHA-256 bütünlük karmasıyla saklanır; karma tutmayan (elle değiştirilmiş
-// veya bozulmuş) kayıt yok sayılır. Hiçbir veri sunucuya gönderilmez.
+// veya bozulmuş) kayıt yok sayılır. Kayıtlar yalnızca bu tarayıcıda tutulur.
 
 const ONEK = 'gateos.kaza-simulator.';
 const TUZ = 'kaza-simulator/v3';

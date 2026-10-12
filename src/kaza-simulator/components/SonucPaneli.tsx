@@ -1,21 +1,18 @@
 'use client';
 
-// Hesaplama sonuçları ve kusur ön değerlendirmesi.
+// Hesaplama sonuçları ve olası kusur dağılımı.
 
-import { CircleHelp, FileImage, Printer, TriangleAlert } from 'lucide-react';
+import { BookOpenText, ChevronDown, CircleHelp, FileImage, Printer, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { CARPISMA_TIP_ADI, MEVZUAT_KAYNAGI } from '../data/kazaData.ts';
+import { KTK_HUKUMLERI, hukumListesi } from '../data/ktkMetinleri.ts';
+import { HukumAlintisi } from './HukumAlintisi.tsx';
+import { SimulasyonUyarisi } from './Marka.tsx';
 import { siddetEtiketi } from '../lib/physics.ts';
 import { HizGrafigi } from './HizGrafigi.tsx';
 import type { KatilimciGirdi, KusurSonuc, SimSonuc, TarafId, TarafSonuc } from '../types/kazaTypes.ts';
 import { Baslik, Buton, Kart, Rozet, TarafNokta, cn } from './ui/temel.tsx';
 
-const TIP_ADI: Record<SimSonuc['tip'], string> = {
-    yandan: 'Önden-yana (yandan) çarpışma',
-    'kafa-kafaya': 'Kafa kafaya çarpışma',
-    arkadan: 'Arkadan çarpma',
-    siyirma: 'Sıyırma',
-    yaya: 'Yayaya çarpma',
-};
 
 const kmh = (v: number): string => (v * 3.6).toFixed(1);
 
@@ -33,11 +30,11 @@ function TarafBlogu({ s, ad }: { s: TarafSonuc; ad: string }) {
     const siddet = siddetEtiketi(s.deltaV);
     const k = s.kacinilabilirlik;
     return (
-        <Kart className="p-4">
+        <Kart className="p-3.5 md:p-4">
             <div className="mb-2 flex items-center gap-2.5">
                 <TarafNokta id={s.id} className="h-7 w-7" />
                 <div className="min-w-0 flex-1 truncate text-[13.5px] font-bold">{ad}</div>
-                <Rozet className="shrink-0" renk={siddet.ad === 'Hafif' ? 'yesil' : siddet.ad === 'Orta' ? 'sari' : 'kirmizi'}>{siddet.ad}</Rozet>
+                <Rozet className="shrink-0" renk={siddet.ad === 'Hafif' ? 'yesil' : siddet.ad === 'Orta' ? 'sari' : 'kirmizi'}>ΔV: {siddet.ad.toLocaleLowerCase('tr-TR')}</Rozet>
             </div>
             <div className="divide-y divide-border/60">
                 <Satir ad="Kaza öncesi hız" deger={`${kmh(s.v0)} km/s`} />
@@ -59,8 +56,8 @@ function TarafBlogu({ s, ad }: { s: TarafSonuc; ad: string }) {
                         <span title="Sürücü hız sınırında seyretseydi, tehlikeyi aynı noktada algılayıp aynı tepki süresiyle frene bassaydı ne olurdu?"><CircleHelp className="h-3.5 w-3.5 opacity-60" /></span>
                     </div>
                     {k.kacinilabilir
-                        ? <>Sınırda seyretseydi {k.limitteDurusMesafesi.toFixed(1)} m’de durarak çarpışma noktasına <b>ulaşmadan durabilirdi</b>.</>
-                        : <>Sınırda seyretseydi de duramazdı; çarpma hızı yaklaşık <b>{kmh(k.limitteCarpmaHizi)} km/s</b> olurdu.</>}
+                        ? <>Sınırda seyretseydi {k.limitteDurusMesafesi.toFixed(1)} m’de durarak çarpışma noktasına <b>ulaşmadan durabilmesi mümkün görünüyor</b>.</>
+                        : <>Sınırda seyretseydi de durması mümkün görünmüyor; çarpma hızı yaklaşık <b>{kmh(k.limitteCarpmaHizi)} km/s</b> olabilirdi.</>}
                 </div>
             )}
         </Kart>
@@ -91,9 +88,10 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
     const yuzde = (id: TarafId): number => kusur[id].yuzde;
     return (
         <div className="space-y-3">
-            <Kart className="p-4">
+            <SimulasyonUyarisi />
+            <Kart className="p-3.5 md:p-4">
                 <Baslik sag={<Rozet>{(sonuc.tCarpisma).toFixed(1)} sn’de temas</Rozet>}>Özet</Baslik>
-                <div className="text-[14px] font-semibold">{TIP_ADI[sonuc.tip]}</div>
+                <div className="text-[14px] font-semibold">{CARPISMA_TIP_ADI[sonuc.tip]}</div>
                 <div className="mt-1 text-[12.5px] text-muted-foreground">
                     Çarpışmada sönümlenen kinetik enerji ≈ <b className="text-foreground tabular-nums">{sonuc.enerjiKJ.toFixed(0)} kJ</b>
                 </div>
@@ -108,7 +106,7 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
                 )}
             </Kart>
 
-            <Kart className="p-4">
+            <Kart className="p-3.5 md:p-4">
                 <Baslik sag={<span className="text-[11px] text-muted-foreground">Tıklayınca o ana sarar</span>}>Hız – zaman</Baslik>
                 <HizGrafigi sonuc={sonuc} t={t} tarafAdlari={tarafAdlari} zamanaGit={zamanaGit} />
             </Kart>
@@ -116,13 +114,20 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
             <TarafBlogu s={sonuc.taraflar.A} ad={tarafAdlari.A} />
             <TarafBlogu s={sonuc.taraflar.B} ad={tarafAdlari.B} />
 
-            <Kart className="p-4">
-                <Baslik>Kusur ön değerlendirmesi</Baslik>
+            <Kart className="p-3.5 md:p-4">
+                <Baslik sag={<Rozet renk="sari" className="shrink-0">Tespit değildir</Rozet>}>Olası kusur dağılımı</Baslik>
                 <div className="flex h-9 overflow-hidden rounded-full text-[12.5px] font-bold text-white">
                     <div className="flex min-w-14 items-center justify-center bg-taraf-a transition-all" style={{ flex: Math.max(yuzde('A'), 9) }}>A %{kusur.A.yuzdeMetin}</div>
                     <div className="flex min-w-14 items-center justify-center bg-taraf-b transition-all" style={{ flex: Math.max(yuzde('B'), 9) }}>B %{kusur.B.yuzdeMetin}</div>
                 </div>
-                {kusur.belirsiz && <p className="mt-2 text-[12px] text-muted-foreground">İki taraf için de ihlal işaretlenmediğinden dağılım belirlenemedi; %50–%50 varsayıldı.</p>}
+                <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">Oranlar, yalnızca girdiğiniz ihlal ve hız bilgilerine göre 8’lik dilimle hesaplanmış <b>olası</b> bir dağılımdır; somut olayda farklı sonuç çıkabilir.</p>
+                {kusur.coklu84 && (
+                    <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                        Her iki tarafta da KTK m.84’te sayılan hâllerden biri işaretlendi. Maddenin son cümlesine göre bu durumda kusur oranı yönetmelikte belirtilen esaslara göre belirlenir; aşağıdaki dağılım yalnızca bir ön fikirdir.
+                        <HukumAlintisi hukum={KTK_HUKUMLERI['84/son']} className="mt-2 bg-white/70" />
+                    </div>
+                )}
+                {kusur.belirsiz && <p className="mt-2 text-[12px] text-muted-foreground">İki taraf için de ihlal işaretlenmediğinden olası dağılım belirlenemedi; %50–%50 varsayıldı.</p>}
                 <div className="mt-3 space-y-3">
                     {(['A', 'B'] as const).map((id) => (
                         <div key={id}>
@@ -135,12 +140,32 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
                             </div>
                             <ul className="mt-1 space-y-0.5 pl-1 text-[12px] leading-snug text-muted-foreground">
                                 {kusur[id].gerekceler.length
-                                    ? kusur[id].gerekceler.map((g) => <li key={g.ad}>• {g.ad} <i className="opacity-80">({g.dayanak})</i></li>)
-                                    : <li>• Kural ihlali işaretlenmedi</li>}
+                                    ? kusur[id].gerekceler.map((g) => (
+                                        <li key={g.ad}>
+                                            • {g.ad} söz konusu olabilir
+                                            {g.madde84 && <Rozet renk="kirmizi" className="ml-1 align-middle">m.84/{g.madde84}</Rozet>}
+                                            <i className="block pl-2.5 opacity-80">{g.dayanak}</i>
+                                            {g.hukumler.length > 0 && (
+                                                <details className="group/k mt-1 pl-2.5">
+                                                    <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-foreground/80 hover:bg-border">
+                                                        <BookOpenText className="h-3 w-3" /> Kanun metni ({g.hukumler.length})
+                                                        <ChevronDown className="h-3 w-3 transition group-open/k:rotate-180" />
+                                                    </summary>
+                                                    <div className="mt-1.5 space-y-1.5">
+                                                        {hukumListesi(g.hukumler).map(({ anahtar, hukum }) => <HukumAlintisi key={anahtar} hukum={hukum} />)}
+                                                    </div>
+                                                </details>
+                                            )}
+                                        </li>
+                                    ))
+                                    : <li>• Olası ihlal işaretlenmedi</li>}
                             </ul>
                         </div>
                     ))}
                 </div>
+                <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+                    Atıflar: <a href={MEVZUAT_KAYNAGI.url} target="_blank" rel="noopener" className="font-semibold text-aha-red underline-offset-2 hover:underline">{MEVZUAT_KAYNAGI.ad}</a>. {MEVZUAT_KAYNAGI.dogrulama} Alıntılar resmî metinden birebir aktarılmıştır; “…” atlanan kısımları gösterir.
+                </p>
                 <p className="mt-3 rounded-2xl border border-aha-red/25 bg-aha-red/[0.04] px-3.5 py-2.5 text-[11.5px] leading-relaxed text-foreground/80">
                     <b>Simülasyon sonucudur.</b> Meslektaşlarımızın dosya hazırlığına yardımcı olmak için sunulan bir ön değerlendirmedir; hukuki görüş, bilirkişi raporu veya kusur tespiti niteliği taşımaz. Gerçek kusur değerlendirmesi somut olayın tüm delilleriyle bilirkişiler ve yargı mercilerince yapılır.
                 </p>

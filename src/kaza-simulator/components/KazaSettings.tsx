@@ -41,7 +41,7 @@ export function KazaSettings({ kosullar, guncelle, katilimcilar, ihlalEkle }: Ka
     const carpilan: TarafId = kosullar.carpan === 'A' ? 'B' : 'A';
     return (
         <>
-            <Kart className="p-4">
+            <Kart className="p-3.5 md:p-4">
                 <Baslik>Yol ve hava koşulları</Baslik>
                 <div className="space-y-3">
                     <Alan etiket="Yol yüzeyi">
@@ -60,7 +60,7 @@ export function KazaSettings({ kosullar, guncelle, katilimcilar, ihlalEkle }: Ka
                 </div>
             </Kart>
 
-            <Kart className="p-4">
+            <Kart className="p-3.5 md:p-4">
                 <Baslik>Işık, görüş ve hava</Baslik>
                 <div className="space-y-3">
                     <Alan etiket="Aydınlatma">
@@ -91,7 +91,7 @@ export function KazaSettings({ kosullar, guncelle, katilimcilar, ihlalEkle }: Ka
                 </div>
             </Kart>
 
-            <Kart className="p-4">
+            <Kart className="p-3.5 md:p-4">
                 <Baslik>Çarpışma kurgusu</Baslik>
                 {yayaVar ? (
                     <p className="text-[12.5px] leading-relaxed text-muted-foreground">

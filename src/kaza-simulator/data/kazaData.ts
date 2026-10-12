@@ -3,10 +3,9 @@
 
 import type {
     AracTuru, AracTuruId, Bina, Cevre, Ihlal, IsaretTipi, Isaret, KatilimciGirdi,
-    SablonSenaryo, TarafId, Vec2, Yol, YolSinifi, Yuzey, GenelKosullar,
+    SablonSenaryo, SimSonuc, TarafId, Vec2, Yol, YolSinifi, Yuzey, GenelKosullar,
 } from '../types/kazaTypes.ts';
 
-export const SURUM = 'v3.3';
 
 // ---- Kurumsal kimlik ve yasal metinler ----
 const TABAN_YOL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_PATH) || '';
@@ -20,7 +19,14 @@ export const MARKA = {
 } as const;
 
 /** Kısa uyarı: altbilgi, HUD, kroki */
-export const KISA_UYARI = 'Simülasyon aracıdır; hukuki görüş, bilirkişi raporu veya delil niteliği taşımaz.';
+export const KISA_UYARI = 'Simülasyondur; hukuki görüş, bilirkişi raporu veya kusur tespiti değildir, delil niteliği taşımaz.';
+
+/** Ana uyarı: tüm ekranlarda ve raporda aynı ifade */
+export const ANA_UYARI = {
+    baslik: 'Bu bir simülasyondur',
+    metin: 'Hukuki görüş, bilirkişi raporu veya kusur tespiti değildir; delil niteliği taşımaz.',
+    kisa: 'Simülasyondur · hukuki görüş ve bilirkişi raporu değildir',
+} as const;
 
 /** Uzun uyarı metni: ilk giriş penceresi, başlangıç ekranı ve rapor */
 export const YASAL_UYARI: readonly string[] = [
@@ -38,7 +44,15 @@ export const ISIK_ADI: Readonly<Record<GenelKosullar['isik']['A'], string>> = { 
 export const AYDINLATMA_ADI: Readonly<Record<GenelKosullar['aydinlatma'], string>> = { gunduz: 'Gündüz', aksam: 'Alacakaranlık', gece: 'Gece' };
 export const HAVA_ADI: Readonly<Record<GenelKosullar['hava'], string>> = { acik: 'Açık', yagmur: 'Yağmurlu', sis: 'Sisli', kar: 'Karlı' };
 
-export const GIZLILIK_NOTU = 'Üyelik yok, çerez yok, veri toplanmaz — tüm hesaplamalar tarayıcınızda yapılır, girdileriniz hiçbir sunucuya gönderilmez.';
+export const CARPISMA_TIP_ADI: Readonly<Record<SimSonuc['tip'], string>> = {
+    yandan: 'Önden-yana (yandan) çarpışma',
+    'kafa-kafaya': 'Kafa kafaya çarpışma',
+    arkadan: 'Arkadan çarpma',
+    siyirma: 'Sıyırma',
+    yaya: 'Yayaya çarpma',
+};
+
+export const GIZLILIK_NOTU = 'Üyelik yok, çerez yok — kişisel veri toplamıyoruz; hesaplamalar tarayıcınızda yapılır. Harita, adres arama ve yol verisi için yalnızca arama metni ve seçilen konum OpenStreetMap hizmetlerine iletilir.';
 
 // Lastik–yol tipik kayma sürtünme katsayıları (kilitli tekerlek)
 export const YUZEYLER: readonly Yuzey[] = [
@@ -79,26 +93,60 @@ export const YAYA_BOYUT = { boy: 0.45, en: 0.55, yukseklik: 1.72, kutle: 75 } as
 export const TARAF_RENK: Readonly<Record<TarafId, string>> = { A: '#C81D25', B: '#1F5FBF' };
 
 // ---- Kural ihlalleri (2918 sayılı KTK) ----
+// Madde atıfları 2918 sayılı KTK'nın resmî metniyle (mevzuat.gov.tr, doğrulama 2026-08-19)
+// karşılaştırılmıştır. İfade bilinçli olarak "ilgili olabilir" biçimindedir: uygulama
+// kusur tespiti yapmaz. m.84 yalnızca araç sürücüleri için asli kusur hâllerini sayar.
+const M84 = (bent: string): string => `m.84/${bent} (asli kusur sayılan hâller) kapsamında değerlendirilebilir`;
+const M84_DISI = "m.84'te sayılan asli kusur hâlleri arasında değildir; oran yönetmelik esaslarına göre belirlenir";
+
 export const IHLALLER: readonly Ihlal[] = [
-    { id: 'kirmizi-isik', ad: 'Kırmızı ışık ihlali', puan: 100, dayanak: 'KTK m.47; m.84 kapsamında asli kusur sayılan hâl' },
-    { id: 'gecis-onceligi', ad: 'Kavşakta geçiş önceliğine uymama', puan: 100, dayanak: 'KTK m.57; m.84 kapsamında asli kusur sayılan hâl' },
-    { id: 'karsi-serit', ad: 'Karşı şeride / yasak yöne girme', puan: 100, dayanak: 'KTK m.46; m.84 kapsamında asli kusur sayılan hâl' },
-    { id: 'arkadan-carpma', ad: 'Arkadan çarpma (takip mesafesi ihlali)', puan: 100, dayanak: 'KTK m.56; m.84 kapsamında asli kusur sayılan hâl' },
-    { id: 'yasak-sollama', ad: 'Geçme (sollama) yasağı ihlali', puan: 90, dayanak: 'KTK m.54; m.84 kapsamında asli kusur sayılan hâl' },
-    { id: 'manevra', ad: 'Kurallara aykırı dönüş / manevra', puan: 70, dayanak: 'KTK m.53; m.84 kapsamında asli kusur sayılan hâl' },
-    { id: 'serit-ihlali', ad: 'Şerit izleme / değiştirme kuralı ihlali', puan: 55, dayanak: 'KTK m.56 (şerit izleme ve değiştirme)' },
-    { id: 'alkol', ad: 'Alkol / uyuşturucu etkisinde sürüş', puan: 80, dayanak: 'KTK m.48' },
-    { id: 'dikkatsizlik', ad: 'Dikkatsizlik (telefon vb.)', puan: 35, dayanak: 'Genel dikkat ve özen yükümlülüğü — tali kusur ağırlığında' },
-    { id: 'gerekli-tedbir', ad: 'Tehlikeyi görünce tedbir almama', puan: 25, dayanak: 'KTK m.52 (hızın şartlara uydurulması)' },
-    { id: 'yaya-gecidi', ad: 'Yaya geçidinde yayaya öncelik vermeme', puan: 100, dayanak: 'KTK m.74' },
+    { id: 'kirmizi-isik', hukumler: ['47/1-b', '84/a'], ad: 'Kırmızı ışıkta veya yetkili memurun dur işaretinde geçme', puan: 100, madde84: 'a',
+        dayanak: `KTK m.47/1-b (trafik ışıklarına uyma) ile ilgili olabilir; ${M84('a')}` },
+    { id: 'karsi-serit', hukumler: ['46/1-a', '46/1-h', '84/b', '84/c', '84/g'], ad: 'Taşıt giremez yola veya karşı yönün şeridine girme', puan: 100, madde84: 'b–c',
+        dayanak: `KTK m.46/1-a (sağdan gitme) ve tek yönlü yolda m.46/1-h (ters istikamet) ile ilgili olabilir; taşıt giremez yol, bölünmüş yol veya ikiden fazla şeritli yolda ${M84('b–c')}; iki şeritli yolda m.84/g (şeride tecavüz) yönünden değerlendirilebilir` },
+    { id: 'arkadan-carpma', hukumler: ['56/1-c', '52/1-c', '84/d'], ad: 'Arkadan çarpma (güvenli takip mesafesi bırakmama)', puan: 100, madde84: 'd',
+        dayanak: `KTK m.56/1-c ve m.52/1-c (araçlar arası mesafe) ile ilgili olabilir; ${M84('d')}` },
+    { id: 'yasak-sollama', hukumler: ['54/1-b', '84/e'], ad: 'Geçme yasağı olan yerde geçme', puan: 100, madde84: 'e',
+        dayanak: `KTK m.54/1-b (geçmenin yasak olduğu yerler) ile ilgili olabilir; ${M84('e')}` },
+    { id: 'manevra', hukumler: ['67/1-a', '67/1-c', '53/son', '84/f', '84/j'], ad: 'Doğrultu değiştirme / dönüş manevrasını kurala aykırı yapma', puan: 90, madde84: 'f, j',
+        dayanak: `KTK m.53 (dönüş kuralları) ve m.67/1-a, c (manevralar) ile ilgili olabilir; ${M84('f, j')}` },
+    { id: 'serit-ihlali', hukumler: ['46/1-b', '46/1-c', '56/1-a', '84/g'], ad: 'Şeride tecavüz / kurala aykırı şerit değiştirme', puan: 90, madde84: 'g',
+        dayanak: `KTK m.46/1-b, c ve m.56/1-a (şerit izleme) ile ilgili olabilir; ${M84('g')}` },
+    { id: 'gecis-onceligi', hukumler: ['57/1-a', '57/1-c', '84/h'], ad: 'Kavşakta geçiş önceliğine uymama', puan: 100, madde84: 'h',
+        dayanak: `KTK m.57/1-a, c (kavşaklarda geçiş hakkı) ile ilgili olabilir; ${M84('h')}` },
+    { id: 'dar-yol-oncelik', hukumler: ['56/1-b', '84/i'], ad: 'Kaplamanın dar olduğu yerde geçiş önceliğine uymama', puan: 90, madde84: 'i',
+        dayanak: `KTK m.56/1-b (gelen trafikle karşılaşma) ile ilgili olabilir; ${M84('i')}` },
+    { id: 'park-tedbir', hukumler: ['59/1', '84/k'], ad: 'Yerleşim dışı taşıt yolunda park/duraklama veya gerekli tedbiri almama', puan: 90, madde84: 'k',
+        dayanak: `KTK m.59/1 (yerleşim dışında taşıt yolunda duraklama/park) ile ilgili olabilir; ${M84('k')}` },
+    { id: 'parkli-araca-carpma', hukumler: ['84/l'], ad: 'Kurallara uygun park edilmiş araca çarpma', puan: 100, madde84: 'l',
+        dayanak: `${M84('l')}` },
+    { id: 'alkol', hukumler: ['48/1'], ad: 'Alkol, uyuşturucu veya uyarıcı madde etkisinde araç sürme', puan: 80,
+        dayanak: `KTK m.48/1 (alkollü veya uyuşturucu etkisinde araç sürme yasağı) ile ilgili olabilir; ${M84_DISI}` },
+    { id: 'yaya-gecidi', hukumler: ['74/1', '52/1-a', '53/son'], ad: 'Yaya veya okul geçidinde yayaya ilk geçiş hakkı vermeme', puan: 90,
+        dayanak: `KTK m.74 (yayalara ilk geçiş hakkı), m.52/1-a (geçide yaklaşırken yavaşlama) ve dönüşlerde m.53 ile ilgili olabilir; ${M84_DISI}` },
+    { id: 'gerekli-tedbir', hukumler: ['52/1-a', '52/1-b'], ad: 'Hızı yol, görüş ve hava şartlarına uydurmama', puan: 35,
+        dayanak: `KTK m.52/1-a, b ile ilgili olabilir; ${M84_DISI}` },
+    { id: 'dikkatsizlik', hukumler: ['73/1'], ad: 'Seyir hâlinde telefon kullanma / dikkatsiz sürüş', puan: 35,
+        dayanak: `KTK m.73/1 (telefon kullanma yasağı, saygısız sürüş) ile ilgili olabilir; ${M84_DISI}` },
 ];
 
+// Yayalar m.84 kapsamında değildir (m.84 araç sürücülerini sayar); m.68 esas alınır
 export const YAYA_IHLALLERI: readonly Ihlal[] = [
-    { id: 'yaya-kirmizi', ad: 'Kırmızı ışıkta / yaya kırmızısında geçme', puan: 80, dayanak: 'KTK m.68 (ışıklı işaretlere uyma)' },
-    { id: 'yaya-gecit-disi', ad: 'Yakında geçit varken geçit dışından geçme', puan: 60, dayanak: 'KTK m.68' },
-    { id: 'yaya-tasit-yolu', ad: 'Taşıt yolunda yürüme / yola ani çıkış', puan: 50, dayanak: 'KTK m.68' },
-    { id: 'yaya-dikkatsiz', ad: 'Yola kontrolsüz / dikkatsiz çıkma', puan: 35, dayanak: 'KTK m.68' },
+    { id: 'yaya-kirmizi', hukumler: ['68/1-b-1', '47/1-b'], ad: 'Geçitte yaya ışığına / trafik ışığına uymama', puan: 80,
+        dayanak: 'KTK m.68/1-b-1 ve m.47/1-b ile ilgili olabilir' },
+    { id: 'yaya-gecit-disi', hukumler: ['68/1-b', '68/1-b-son'], ad: 'Yakında (≈100 m) geçit veya kavşak varken başka yerden geçme', puan: 60,
+        dayanak: 'KTK m.68/1-b (geçit/kavşak dışından geçme yasağı ve 100 m istisnası) ile ilgili olabilir' },
+    { id: 'yaya-tasit-yolu', hukumler: ['68/1-a'], ad: 'Yaya yolu varken taşıt yolunda yürüme', puan: 50,
+        dayanak: 'KTK m.68/1-a ile ilgili olabilir' },
+    { id: 'yaya-dikkatsiz', hukumler: ['68/1-b-son', '68/1-c'], ad: 'Yolu kontrol etmeden / trafiği tehlikeye düşürecek şekilde geçme', puan: 45,
+        dayanak: 'KTK m.68/1-b (son cümle: yolu kontrol ederek geçme) ve m.68/1-c ile ilgili olabilir' },
 ];
+
+export const MEVZUAT_KAYNAGI = {
+    ad: '2918 sayılı Karayolları Trafik Kanunu (RG 18.10.1983, 18195)',
+    url: 'https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=2918&MevzuatTur=1&MevzuatTertip=5',
+    dogrulama: 'Madde metinleri resmî metinle karşılaştırılmıştır (mevzuat.gov.tr, 19.08.2026 tarihli doğrulanmış derleme).',
+} as const;
 
 // ---- Levha ve öge kataloğu (palet) ----
 export type IsaretGrubu = 'kontrol' | 'yasak' | 'bilgi' | 'zemin' | 'cevre';

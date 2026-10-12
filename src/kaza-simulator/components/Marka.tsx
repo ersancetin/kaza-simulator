@@ -5,7 +5,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { HeartHandshake, Scale, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { GIZLILIK_NOTU, KISA_UYARI, MARKA, SURUM, YASAL_UYARI } from '../data/kazaData.ts';
+import { ANA_UYARI, GIZLILIK_NOTU, KISA_UYARI, MARKA, YASAL_UYARI } from '../data/kazaData.ts';
 import { guvenliKaydet, guvenliYukle } from '../lib/depo.ts';
 import { Buton, cn } from './ui/temel.tsx';
 
@@ -17,7 +17,7 @@ export function MarkaBasligi({ kucuk, className }: { kucuk?: boolean; className?
             <span className="flex min-w-0 flex-col leading-tight">
                 <strong className={cn('truncate font-bold tracking-[0.12em] text-foreground', kucuk ? 'text-[10.5px]' : 'text-[11.5px]')}>{MARKA.kurumBuyuk}</strong>
                 <span className={cn('truncate font-semibold text-aha-red', kucuk ? 'text-[14px]' : 'text-[17px]')}>
-                    {MARKA.uygulama} <span className="text-[10.5px] font-medium text-muted-foreground">{SURUM}</span>
+                    {MARKA.uygulama}
                 </span>
             </span>
         </div>
@@ -37,9 +37,30 @@ export function Altbilgi({ className, uyariAc }: { className?: string; uyariAc?:
     );
 }
 
+/** Simülasyon uyarısı: 'kutu' (başlıklı) veya 'serit' (tek satır, mobil üst şerit) */
+export function SimulasyonUyarisi({ tur = 'kutu', className, tikla }: { tur?: 'kutu' | 'serit'; className?: string; tikla?: () => void }) {
+    if (tur === 'serit') {
+        return (
+            <button type="button" onClick={tikla}
+                className={cn('flex w-full items-center justify-center gap-1.5 bg-aha-red/[0.07] px-3 py-1.5 text-[11.5px] font-semibold text-aha-red', className)}>
+                <Scale className="h-3.5 w-3.5 shrink-0" /> <span className="text-left leading-snug">{ANA_UYARI.kisa}</span>
+            </button>
+        );
+    }
+    return (
+        <div className={cn('flex gap-3 rounded-2xl border border-aha-red/30 bg-aha-red/[0.05] px-3.5 py-3', className)}>
+            <Scale className="mt-0.5 h-5 w-5 shrink-0 text-aha-red" />
+            <div className="min-w-0 text-[12.5px] leading-snug">
+                <div className="font-bold text-aha-red">{ANA_UYARI.baslik}</div>
+                <div className="mt-0.5 font-medium text-foreground/85">{ANA_UYARI.metin}</div>
+            </div>
+        </div>
+    );
+}
+
 export function YasalUyariMetni({ kompakt }: { kompakt?: boolean }) {
     return (
-        <div className={cn('space-y-2.5 leading-relaxed text-foreground/85', kompakt ? 'text-[12px]' : 'text-[13px]')}>
+        <div className={cn('space-y-2.5 leading-relaxed text-foreground/85', kompakt ? 'text-[12px] sm:text-[12.5px]' : 'text-[13px]')}>
             {YASAL_UYARI.map((p) => <p key={p.slice(0, 24)}>{p}</p>)}
         </div>
     );
@@ -76,35 +97,38 @@ export function UyariPenceresi({ acik, setAcik }: { acik: boolean; setAcik: (a: 
                 <Dialog.Content
                     onEscapeKeyDown={(e) => { if (ilk) e.preventDefault(); }}
                     onPointerDownOutside={(e) => { if (ilk) e.preventDefault(); }}
-                    className="ince-kaydirma fixed left-1/2 top-1/2 z-[4501] max-h-[90vh] w-[min(94vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-white shadow-2xl animate-giris"
+                    className="ince-kaydirma fixed left-1/2 top-1/2 z-[4501] max-h-[88dvh] w-[min(94vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-white shadow-2xl animate-giris"
                 >
-                    <div className="border-b border-border/70 px-6 pb-5 pt-6">
-                        <MarkaBasligi />
-                        <Dialog.Title className="mt-5 flex items-center gap-2 text-lg font-bold">
+                    <div className="border-b border-border/70 px-5 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
+                        <MarkaBasligi kucuk />
+                        <Dialog.Title className="mt-4 flex items-center gap-2 text-lg font-bold">
                             <Scale className="h-5 w-5 text-aha-red" /> Önemli uyarı
                         </Dialog.Title>
                         <Dialog.Description className="mt-1 text-[12.5px] text-muted-foreground">
                             Uygulamayı kullanmadan önce lütfen okuyun.
                         </Dialog.Description>
                     </div>
-                    <div className="space-y-4 px-6 py-5">
-                        <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="space-y-4 px-5 py-4 sm:px-6 sm:py-5">
+                        <SimulasyonUyarisi />
+                        <div className="grid gap-1.5 sm:grid-cols-3 sm:gap-2">
                             {[
                                 { ikon: HeartHandshake, baslik: 'Meslektaş faydasına', metin: 'Ücretsiz, açık bir ön hazırlık aracı' },
-                                { ikon: Scale, baslik: 'Hukuki görüş değildir', metin: 'Bilirkişi raporu yerine geçmez' },
-                                { ikon: ShieldCheck, baslik: 'Veri toplanmaz', metin: 'Her şey tarayıcınızda kalır' },
+                                { ikon: Scale, baslik: 'Hukuki görüş değildir', metin: 'Bilirkişi raporu, kusur tespiti yerine geçmez' },
+                                { ikon: ShieldCheck, baslik: 'Kişisel veri toplanmaz', metin: 'Hesaplamalar tarayıcınızda yapılır' },
                             ].map(({ ikon: Ikon, baslik, metin }) => (
-                                <div key={baslik} className="rounded-2xl bg-muted/70 p-3">
-                                    <Ikon className="h-4 w-4 text-aha-red" />
-                                    <div className="mt-1.5 text-[12.5px] font-bold">{baslik}</div>
-                                    <div className="text-[11.5px] font-light leading-snug text-muted-foreground">{metin}</div>
+                                <div key={baslik} className="flex items-center gap-3 rounded-2xl bg-muted/70 px-3 py-2 sm:block sm:p-3">
+                                    <Ikon className="h-4 w-4 shrink-0 text-aha-red" />
+                                    <div className="min-w-0">
+                                        <div className="text-[12.5px] font-bold sm:mt-1.5">{baslik}</div>
+                                        <div className="text-[11.5px] font-light leading-snug text-muted-foreground">{metin}</div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                        <YasalUyariMetni />
+                        <YasalUyariMetni kompakt />
                     </div>
-                    <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border/70 bg-white/95 px-6 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-                        <span className="text-[11.5px] text-muted-foreground">{GIZLILIK_NOTU.split(' — ')[0]}</span>
+                    <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border/70 bg-white/95 px-5 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+                        <span className="hidden text-[11.5px] text-muted-foreground sm:inline">{GIZLILIK_NOTU.split(' — ')[0]}</span>
                         <Buton tur="birincil" className="justify-center" onClick={onayla}>
                             {ilk ? 'Okudum, anladım' : 'Kapat'}
                         </Buton>
