@@ -228,7 +228,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                     </Tabs.Content>
 
                                     <Tabs.Content value="sonuc" className="outline-none">
-                                        <SonucPaneli sonuc={m.sonuc} kusur={m.kusur} katilimcilar={m.katilimcilar} tarafAdlari={tarafAdlari} yazdir={m.yazdir} krokiIndir={m.krokiIndir} />
+                                        <SonucPaneli sonuc={m.sonuc} kusur={m.kusur} katilimcilar={m.katilimcilar} tarafAdlari={tarafAdlari} yazdir={m.yazdir} krokiIndir={m.krokiIndir} t={m.zaman.t} zamanaGit={m.zamanaGit} />
                                     </Tabs.Content>
                                 </div>
                             </Tabs.Root>
@@ -262,7 +262,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                 <ZamanCubugu
                                     t={m.zaman.t} sure={m.zaman.sure} tCarpisma={m.sonuc?.tCarpisma ?? 0} oynuyor={m.oynuyor}
                                     hiz={m.oynatmaHizi} oynatDuraklat={m.oynatDuraklat} zamanaGit={m.zamanaGit} adimAt={m.adimAt}
-                                    setHiz={m.setOynatmaHizi} etkin={!!m.sonuc}
+                                    setHiz={m.setOynatmaHizi} etkin={!!m.sonuc} sonuc={m.sonuc}
                                 />
                             </div>
                             {!panelAcik && (

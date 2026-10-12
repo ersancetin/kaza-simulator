@@ -2,7 +2,7 @@
 
 import { Crosshair, Eye, Loader2, MousePointerClick, Pencil, RotateCw, Video, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ISARET_ADI } from '../data/kazaData.ts';
+import { ISARET_ADI, MARKA } from '../data/kazaData.ts';
 import { anlikDurum } from '../lib/hud.ts';
 import type { SahneMotoru } from '../lib/three/sahneMotoru.ts';
 import type { CevreDurumu, DuzenlemeModu, KameraModu, SimSonuc, TarafId } from '../types/kazaTypes.ts';
@@ -84,10 +84,17 @@ export function SahneGorunumu(p: SahneGorunumuProps) {
             <div ref={kapRef} className="absolute inset-0" aria-label="3B kaza sahnesi" />
 
             {(yukleniyor || p.durum.tur === 'yukleniyor') && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/55 backdrop-blur-[2px]">
-                    <div className="flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-semibold shadow-lg">
-                        <Loader2 className="h-4 w-4 animate-spin text-aha-red" />
-                        {p.durum.tur === 'yukleniyor' ? p.durum.mesaj : '3B sahne hazırlanıyor…'}
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-b from-white/80 to-white/50 backdrop-blur-[3px]">
+                    <div className="flex flex-col items-center gap-4 rounded-3xl bg-white px-10 py-7 shadow-xl animate-giris">
+                        <span className="relative flex h-20 w-20 items-center justify-center">
+                            <span className="absolute inset-0 animate-ping rounded-full bg-aha-red/15" />
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={MARKA.logo} alt="" className="relative h-20 w-20 rounded-full shadow-md" />
+                        </span>
+                        <div className="flex items-center gap-2 text-sm font-semibold">
+                            <Loader2 className="h-4 w-4 animate-spin text-aha-red" />
+                            {p.durum.tur === 'yukleniyor' ? p.durum.mesaj : '3B sahne hazırlanıyor…'}
+                        </div>
                     </div>
                 </div>
             )}

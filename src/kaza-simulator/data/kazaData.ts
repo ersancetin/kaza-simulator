@@ -6,7 +6,7 @@ import type {
     SablonSenaryo, TarafId, Vec2, Yol, YolSinifi, Yuzey, GenelKosullar,
 } from '../types/kazaTypes.ts';
 
-export const SURUM = 'v3.1';
+export const SURUM = 'v3.2';
 
 // ---- Kurumsal kimlik ve yasal metinler ----
 const TABAN_YOL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_PATH) || '';

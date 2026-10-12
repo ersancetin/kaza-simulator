@@ -29,8 +29,9 @@ const MALZEME = {
     levhaArka: new THREE.MeshStandardMaterial({ color: 0x8e949b, roughness: 0.5, metalness: 0.7 }),
 };
 
-function govdeMalzemesi(renk: string | number): THREE.MeshPhysicalMaterial {
-    return new THREE.MeshPhysicalMaterial({ color: renk, roughness: 0.32, metalness: 0.45, clearcoat: 0.8, clearcoatRoughness: 0.12 });
+function govdeMalzemesi(renk: string | number): THREE.MeshStandardMaterial {
+    // Ortam yansımasıyla metalik boya görünümü; clearcoat'lu fiziksel malzemeden çok daha hızlı derlenir
+    return new THREE.MeshStandardMaterial({ color: renk, roughness: 0.28, metalness: 0.55, envMapIntensity: 1.25 });
 }
 
 /** (z, y) çokgenini x ekseninde genişlik kadar ekstrüde eder, merkezler */
@@ -90,6 +91,13 @@ function teker(r: number, genislik: number): THREE.Group {
     const gobek = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.16, r * 0.16, genislik + 0.03, 8), MALZEME.plastik);
     gobek.rotation.z = Math.PI / 2;
     g.add(gobek);
+    // Jant kolları: dönüş gözle görülsün
+    for (let i = 0; i < 5; i++) {
+        const kol = new THREE.Mesh(new THREE.BoxGeometry(genislik + 0.02, r * 0.95, r * 0.09), MALZEME.plastik);
+        kol.rotation.x = (i * Math.PI) / 5;
+        g.add(kol);
+    }
+    g.userData.tekerR = r;
     return g;
 }
 
@@ -309,6 +317,7 @@ function ikiTeker(g: THREE.Group, tur: 'motosiklet' | 'bisiklet', boy: number, g
                 tel.rotation.x = (i * Math.PI) / 6;
                 grp.add(tel);
             }
+            grp.userData.tekerR = r;
             return grp;
         })();
         t.position.set(0, r, z);
@@ -412,6 +421,16 @@ export function aracOlustur(renk: string, tur: AracTuruId, plaka: string): THREE
             traktor(g, T.en, T.boy, govde, plaka);
             break;
     }
+    // Araca özgü stop lambası malzemesi (frende parlar) ve teker listesi
+    const stop = MALZEME.stop.clone();
+    const tekerler: THREE.Object3D[] = [];
+    g.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.isMesh && m.material === MALZEME.stop) m.material = stop;
+        if (o.userData.tekerR) tekerler.push(o);
+    });
+    g.userData.stop = stop;
+    g.userData.tekerler = tekerler;
     return g;
 }
 
