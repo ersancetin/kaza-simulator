@@ -5,6 +5,7 @@
 import { CircleHelp, FileImage, Printer, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { siddetEtiketi } from '../lib/physics.ts';
+import { HizGrafigi } from './HizGrafigi.tsx';
 import type { KatilimciGirdi, KusurSonuc, SimSonuc, TarafId, TarafSonuc } from '../types/kazaTypes.ts';
 import { Baslik, Buton, Kart, Rozet, TarafNokta, cn } from './ui/temel.tsx';
 
@@ -73,9 +74,11 @@ export interface SonucPaneliProps {
     tarafAdlari: Record<TarafId, string>;
     yazdir: () => void;
     krokiIndir: () => void;
+    t: number;
+    zamanaGit: (t: number) => void;
 }
 
-export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir }: SonucPaneliProps) {
+export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, zamanaGit }: SonucPaneliProps) {
     if (!sonuc || !kusur) {
         return (
             <Kart className="p-6 text-center">
@@ -103,6 +106,11 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir }: S
                         ))}
                     </ul>
                 )}
+            </Kart>
+
+            <Kart className="p-4">
+                <Baslik sag={<span className="text-[11px] text-muted-foreground">Tıklayınca o ana sarar</span>}>Hız – zaman</Baslik>
+                <HizGrafigi sonuc={sonuc} t={t} tarafAdlari={tarafAdlari} zamanaGit={zamanaGit} />
             </Kart>
 
             <TarafBlogu s={sonuc.taraflar.A} ad={tarafAdlari.A} />

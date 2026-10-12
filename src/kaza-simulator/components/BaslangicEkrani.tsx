@@ -4,6 +4,7 @@ import { Car, ChevronRight, HeartHandshake, Loader2, MapPin, PersonStanding, Rou
 import { useEffect, useRef, useState } from 'react';
 import { SABLONLAR } from '../data/kazaData.ts';
 import { Altbilgi, MarkaBasligi } from './Marka.tsx';
+import { SablonCizimi } from './SablonCizimi.tsx';
 import { adresAra } from '../lib/osm.ts';
 import type { SecilenKonum } from '../types/kazaTypes.ts';
 import { HaritaSecici } from './HaritaSecici.tsx';
@@ -162,10 +163,14 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc }
                                             onClick={() => sablonYukle(s.id)}
                                             className="group flex w-full items-center gap-3 rounded-2xl border border-border/80 bg-white p-3 text-left transition hover:border-aha-red/50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aha-red/25"
                                         >
-                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition group-hover:bg-aha-red group-hover:text-white">
-                                                <Ikon className="h-[18px] w-[18px]" />
+                                            <span className="relative shrink-0 transition group-hover:scale-[1.04]">
+                                                <SablonCizimi sablon={s} />
+                                                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-foreground shadow-sm ring-1 ring-border/80 transition group-hover:bg-aha-red group-hover:text-white">
+                                                    <Ikon className="h-3 w-3" />
+                                                </span>
                                             </span>
                                             <span className="min-w-0 flex-1">
+                                                <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.1em] text-aha-red">{s.etiket}</span>
                                                 <span className="block text-[13.5px] font-semibold leading-tight">{s.ad}</span>
                                                 <span className="mt-0.5 block text-[12px] font-light leading-snug text-muted-foreground">{s.aciklama}</span>
                                             </span>

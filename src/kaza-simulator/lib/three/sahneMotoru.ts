@@ -29,6 +29,8 @@ interface TarafNesnesi {
     yaya: YayaModeli | null;
     etiket: THREE.Sprite;
     iki: boolean;
+    tekerler: THREE.Object3D[];
+    stop: THREE.MeshStandardMaterial | null;
 }
 
 interface IzNesnesi {
@@ -65,6 +67,7 @@ export class SahneMotoru {
     private enkaz: THREE.InstancedMesh | null = null;
     private enkazVeri: Float32Array | null = null;
     private parlama: THREE.Sprite | null = null;
+    private tozlar: THREE.Sprite[] = [];
     private guzergahlar: THREE.Group | null = null;
     private guzergahGorunur = true;
 
@@ -97,6 +100,8 @@ export class SahneMotoru {
         this.cizici.toneMapping = THREE.ACESFilmicToneMapping;
         this.cizici.toneMappingExposure = 1.05;
         this.cizici.shadowMap.enabled = true;
+        // Shader hatalarının eşzamanlı denetimi kapalı: derleme paralel yürür, sahne açılışında takılma olmaz
+        this.cizici.debug.checkShaderErrors = false;
         this.cizici.shadowMap.type = THREE.PCFShadowMap;
         this.cizici.domElement.style.display = 'block';
         this.cizici.domElement.style.touchAction = 'none';
@@ -141,6 +146,7 @@ export class SahneMotoru {
         zemin.receiveShadow = true;
         this.sahne.add(zemin);
         this.sahne.add(this.dinamik, this.onizleme);
+        this.bulutlarKur();
 
         // Kaza noktası işaretçisi
         this.isaretci = new THREE.Group();
@@ -182,6 +188,36 @@ export class SahneMotoru {
         this.gozlemci.observe(kap);
         this.boyutlandir();
         this.cizici.setAnimationLoop(this.dongu);
+    }
+
+    /** Uzak gökyüzünde yumuşak bulutlar (sis etkilemez) */
+    private bulutlarKur(): void {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 128;
+        const x = c.getContext('2d');
+        if (!x) return;
+        for (const [cx, cy, r] of [[70, 80, 46], [120, 62, 58], [175, 78, 44], [140, 92, 40], [95, 95, 36]] as const) {
+            const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+            g.addColorStop(0, 'rgba(255,255,255,0.95)');
+            g.addColorStop(0.6, 'rgba(255,255,255,0.55)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            x.fillStyle = g;
+            x.fillRect(0, 0, 256, 128);
+        }
+        const doku = new THREE.CanvasTexture(c);
+        doku.colorSpace = THREE.SRGBColorSpace;
+        const mat = new THREE.SpriteMaterial({ map: doku, transparent: true, depthWrite: false, fog: false, opacity: 0.85 });
+        for (let i = 0; i < 14; i++) {
+            const a = (i / 14) * Math.PI * 2 + (i % 3) * 0.3;
+            const r = 1100 + (i % 4) * 160;
+            const sp = new THREE.Sprite(mat);
+            sp.position.set(Math.cos(a) * r, 230 + (i % 5) * 45, Math.sin(a) * r);
+            const o = 260 + (i % 3) * 90;
+            sp.scale.set(o, o / 2, 1);
+            sp.renderOrder = -1;
+            this.sahne.add(sp);
+        }
     }
 
     // ================= Genel =================
@@ -372,6 +408,7 @@ export class SahneMotoru {
         this.parlama = null;
         this.guzergahlar = null;
         this.sonuc = sonuc;
+        this.tozlar = [];
         this.oynuyor = false;
         if (!sonuc || !gorunum) {
             this.isaretci.visible = true;
@@ -402,7 +439,12 @@ export class SahneMotoru {
             etiket.renderOrder = 10;
             kok.add(etiket);
             this.dinamik.add(kok);
-            this.taraflar[id] = { kok, govde, yaya, etiket, iki: g.tip === 'arac' && ARAC_TURLERI[g.tur].profil === 'iki-teker' };
+            this.taraflar[id] = {
+                kok, govde, yaya, etiket,
+                iki: g.tip === 'arac' && ARAC_TURLERI[g.tur].profil === 'iki-teker',
+                tekerler: (govde.userData.tekerler as THREE.Object3D[] | undefined) ?? [],
+                stop: (govde.userData.stop as THREE.MeshStandardMaterial | undefined) ?? null,
+            };
         }
 
         // Lastik izleri: zaman sırasıyla kademeli görünür
@@ -432,6 +474,18 @@ export class SahneMotoru {
         this.parlama.visible = false;
         this.dinamik.add(this.parlama);
 
+        // Toz/duman bulutu: çarpışma noktasından genişleyip sönen yumuşak lekeler
+        const tozDoku = this.tozDokusu();
+        this.tozlar = [];
+        for (let i = 0; i < 9; i++) {
+            const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tozDoku, transparent: true, depthWrite: false, color: 0xd9d4c8 }));
+            const a = (i / 9) * Math.PI * 2 + 0.4;
+            sp.userData = { dx: Math.cos(a), dz: Math.sin(a), v: 1.2 + (i % 3) * 0.6, y: 0.5 + (i % 2) * 0.5 };
+            sp.visible = false;
+            this.tozlar.push(sp);
+            this.dinamik.add(sp);
+        }
+
         this.isaretci.visible = true;
         this.zamanAyarla(0);
     }
@@ -453,6 +507,23 @@ export class SahneMotoru {
         mesh.geometry.setDrawRange(0, 0);
         this.dinamik.add(mesh);
         this.izler.push({ mesh, zamanlar: iz.zamanlar });
+    }
+
+    private tozDokusu(): THREE.CanvasTexture {
+        const c = document.createElement('canvas');
+        c.width = c.height = 128;
+        const x = c.getContext('2d');
+        if (x) {
+            const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+            g.addColorStop(0, 'rgba(255,255,255,0.75)');
+            g.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            x.fillStyle = g;
+            x.fillRect(0, 0, 128, 128);
+        }
+        const t = new THREE.CanvasTexture(c);
+        t.userData.tekil = true;
+        return t;
     }
 
     private parlamaDokusu(): THREE.CanvasTexture {
@@ -600,6 +671,13 @@ export class SahneMotoru {
                 yayaAnimasyonu(n.yaya, KARE[5], devrilme < 0.01 && KARE[6] > 0.05);
             } else {
                 n.kok.rotation.set(0, psi, 0);
+                // Tekerler katedilen yola göre döner; frende ve çarpışma sonrası stoplar parlar
+                for (const t of n.tekerler) t.rotation.x = KARE[5] / (t.userData.tekerR as number);
+                if (n.stop) {
+                    const ts = s.taraflar[id];
+                    const frende = (ts.izEtkin > 0 && this.t >= ts.tFrenBaslangic) || this.t > s.tCarpisma + 1;
+                    n.stop.emissiveIntensity = frende ? 3.2 : 0.6;
+                }
                 if (n.iki && devrilme > 0) {
                     n.govde.rotation.z = devrilme;
                     n.govde.position.y = Math.sin(devrilme) * 0.25;
@@ -623,6 +701,19 @@ export class SahneMotoru {
                 this.parlama.scale.set(o, o, 1);
                 (this.parlama.material as THREE.SpriteMaterial).opacity = Math.max(0, 1 - Math.max(0, tau) / 0.32);
             }
+        }
+        for (const sp of this.tozlar) {
+            const omur = 1.6;
+            const gorunur = tau >= 0 && tau < omur;
+            sp.visible = gorunur;
+            if (!gorunur) continue;
+            const u = sp.userData as { dx: number; dz: number; v: number; y: number };
+            const k = tau / omur;
+            const yol = u.v * omur * (1 - (1 - k) * (1 - k)) / 2;
+            sp.position.set(s.P.x + u.dx * yol, u.y + k * 1.2, s.P.z + u.dz * yol);
+            const o = 1.2 + k * 3.5;
+            sp.scale.set(o, o, 1);
+            (sp.material as THREE.SpriteMaterial).opacity = 0.55 * (1 - k);
         }
         this.kirli = true;
         if (this.onZaman && (Math.abs(this.t - this.sonBildirim) > 0.04 || !this.oynuyor)) {

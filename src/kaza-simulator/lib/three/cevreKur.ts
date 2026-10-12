@@ -418,10 +418,57 @@ export function statikCevreKur(cevre: Cevre, merkez: Vec2): THREE.Group {
         grup.add(m);
     }
 
+    const lambalar = sokakLambalari(cevre, merkez, dugumler);
+    if (lambalar) grup.add(lambalar);
+
     const agaclar = cevre.agaclar.filter((a) => uzaklik(a, merkez) < 700).slice(0, 2500);
     grup.add(agacOrmani(agaclar));
     for (const o of yolAdlari(cevre, merkez)) grup.add(o);
     return grup;
+}
+
+/** Kentsel yol kenarlarına sokak lambaları (örneklenmiş: iki çizim çağrısı) */
+function sokakLambalari(cevre: Cevre, merkez: Vec2, dugumler: readonly KavsakDugumu[]): THREE.Object3D | null {
+    const yerler: Array<{ p: Vec2; aci: number }> = [];
+    for (const yol of cevre.yollar) {
+        if (!KALDIRIMLI_SINIFLAR.has(yol.sinif) || yol.kaldirimYok || yol.genislik < 6) continue;
+        const rota = new Rota(yol.noktalar);
+        let yan = 1;
+        for (let s = 8; s < rota.uzunluk; s += 30) {
+            const p = rota.konum(s);
+            if (uzaklik(p, merkez) > 230 || kavsakIcinde(p, dugumler, 5)) continue;
+            const d = rota.yon(s);
+            const r = sag(d);
+            const ofs = yol.genislik / 2 + 0.7;
+            const yer = { x: p.x + r.x * ofs * yan, z: p.z + r.z * ofs * yan };
+            yerler.push({ p: yer, aci: yonAci({ x: -r.x * yan, z: -r.z * yan }) });
+            yan = -yan;
+        }
+    }
+    if (!yerler.length) return null;
+    const direk = new THREE.CylinderGeometry(0.06, 0.1, 7, 8);
+    direk.translate(0, 3.5, 0);
+    const kol = new THREE.BoxGeometry(0.07, 0.07, 1.7);
+    kol.translate(0, 6.95, 0.8);
+    const govdeGeo = birlestir([direk, kol]);
+    const basGeo = new THREE.BoxGeometry(0.32, 0.12, 0.6);
+    basGeo.translate(0, 6.86, 1.55);
+    const n = yerler.length;
+    const govde = new THREE.InstancedMesh(govdeGeo, new THREE.MeshStandardMaterial({ color: 0x5d636b, roughness: 0.45, metalness: 0.7 }), n);
+    const bas = new THREE.InstancedMesh(basGeo, new THREE.MeshStandardMaterial({ color: 0xf3f1ea, emissive: 0xfff2cc, emissiveIntensity: 0.35, roughness: 0.4 }), n);
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const bir = new THREE.Vector3(1, 1, 1);
+    yerler.forEach((y, i) => {
+        q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), y.aci);
+        m.compose(new THREE.Vector3(y.p.x, 0, y.p.z), q, bir);
+        govde.setMatrixAt(i, m);
+        bas.setMatrixAt(i, m);
+    });
+    govde.castShadow = true;
+    const g = new THREE.Group();
+    g.add(govde, bas);
+    return g;
 }
 
 /** Levhalar ve elle eklenen ögeler — sık değişir, ayrı grupta kurulur */

@@ -5,6 +5,8 @@
 
 import { Pause, Play, SkipBack, StepBack, StepForward } from 'lucide-react';
 import { useKaydirma } from '../hooks/useKaydirma.ts';
+import { TARAF_RENK } from '../data/kazaData.ts';
+import type { SimSonuc, TarafId } from '../types/kazaTypes.ts';
 import { Buton, cn } from './ui/temel.tsx';
 
 export interface ZamanCubuguProps {
@@ -18,6 +20,31 @@ export interface ZamanCubuguProps {
     adimAt: (dt: number) => void;
     setHiz: (h: number) => void;
     etkin: boolean;
+    sonuc: SimSonuc | null;
+}
+
+interface Evre {
+    bas: number;
+    son: number;
+    ad: string;
+    opaklik: number;
+}
+
+/** Tarafın zaman çizelgesindeki evreleri (seyir, tepki, fren, savrulma) */
+function evreler(s: SimSonuc, id: TarafId): Evre[] {
+    const t = s.taraflar[id];
+    const tC = s.tCarpisma;
+    const e: Evre[] = [];
+    const ekle = (bas: number, son: number, ad: string, opaklik: number): void => {
+        if (son - bas > 0.01) e.push({ bas, son, ad, opaklik });
+    };
+    if (t.tip === 'arac' && t.algilamaMesafesi > 0) {
+        ekle(0, t.tAlgilama, 'Seyir', 0.22);
+        ekle(t.tAlgilama, t.tFrenBaslangic, 'Algılama-tepki', 0.5);
+        ekle(t.tFrenBaslangic, tC, 'Frenleme', 0.95);
+    } else ekle(0, tC, t.tip === 'yaya' ? 'Yürüyüş' : 'Seyir', 0.22);
+    ekle(tC, s.sure, 'Savrulma', 0.35);
+    return e;
 }
 
 const HIZLAR = [0.1, 0.25, 0.5, 1];
@@ -50,6 +77,18 @@ export function ZamanCubugu(p: ZamanCubuguProps) {
                 />
                 {p.etkin && (
                     <span className="pointer-events-none absolute top-1/2 z-0 h-4 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/70" style={{ left: `${carpOran * 100}%` }} title="Çarpışma anı" />
+                )}
+                {p.sonuc && p.sure > 0 && (
+                    <div className="pointer-events-none absolute inset-x-0 -bottom-2.5 flex flex-col gap-[2px]" aria-hidden="true">
+                        {(['A', 'B'] as const).map((id) => (
+                            <div key={id} className="relative h-[3px]">
+                                {evreler(p.sonuc as SimSonuc, id).map((e) => (
+                                    <span key={e.ad} title={`${id}: ${e.ad}`} className="absolute inset-y-0 rounded-full"
+                                        style={{ left: `${(e.bas / p.sure) * 100}%`, width: `calc(${((e.son - e.bas) / p.sure) * 100}% - 2px)`, background: TARAF_RENK[id], opacity: e.opaklik }} />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
             <span className="w-[86px] shrink-0 text-right text-[12.5px] font-semibold tabular-nums text-foreground">
