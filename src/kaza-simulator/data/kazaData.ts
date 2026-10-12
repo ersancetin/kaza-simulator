@@ -6,7 +6,7 @@ import type {
     SablonSenaryo, TarafId, Vec2, Yol, YolSinifi, Yuzey, GenelKosullar,
 } from '../types/kazaTypes.ts';
 
-export const SURUM = 'v3.2';
+export const SURUM = 'v3.3';
 
 // ---- Kurumsal kimlik ve yasal metinler ----
 const TABAN_YOL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_PATH) || '';
@@ -29,6 +29,14 @@ export const YASAL_UYARI: readonly string[] = [
     'Somut olayda kusur, hız ve tazminat değerlendirmesi; dosyadaki tüm deliller ışığında uzman bilirkişiler ve yetkili yargı mercilerince yapılır. Mevzuat atıfları örneklendirme amaçlıdır; güncel ve bağlayıcı metin için resmî kaynaklara başvurulmalıdır.',
     'Uygulamanın kullanımından veya sonuçlarına dayanılarak alınan kararlardan doğabilecek zararlardan Cumhuriyet Avukatları sorumlu tutulamaz.',
 ];
+
+/** Hava koşuluna göre önerilen yol yüzeyi */
+export const HAVA_YUZEY: Readonly<Record<'yagmur' | 'kar', string>> = { yagmur: 'islak-asfalt', kar: 'karli' };
+
+export const ISIK_ADI: Readonly<Record<GenelKosullar['isik']['A'], string>> = { yok: 'ışık yok', yesil: 'yeşil', sari: 'sarı', kirmizi: 'kırmızı' };
+
+export const AYDINLATMA_ADI: Readonly<Record<GenelKosullar['aydinlatma'], string>> = { gunduz: 'Gündüz', aksam: 'Alacakaranlık', gece: 'Gece' };
+export const HAVA_ADI: Readonly<Record<GenelKosullar['hava'], string>> = { acik: 'Açık', yagmur: 'Yağmurlu', sis: 'Sisli', kar: 'Karlı' };
 
 export const GIZLILIK_NOTU = 'Üyelik yok, çerez yok, veri toplanmaz — tüm hesaplamalar tarayıcınızda yapılır, girdileriniz hiçbir sunucuya gönderilmez.';
 
@@ -176,6 +184,9 @@ export function varsayilanKatilimci(id: TarafId): KatilimciGirdi {
 }
 
 export const VARSAYILAN_KOSULLAR: GenelKosullar = {
+    isik: { A: 'yok', B: 'yok' },
+    aydinlatma: 'gunduz',
+    hava: 'acik',
     yuzeyId: 'kuru-asfalt',
     mu: 0.75,
     limitKmh: 50,
@@ -352,7 +363,7 @@ export const SABLONLAR: readonly SablonSenaryo[] = [
         etiket: 'Kavşak',
         cevre: kavsakCevresi,
         P: { x: 2.25, z: -3.95 },
-        kosullar: { limitKmh: 50, carpismaTipi: 'yandan', carpan: 'A', bolge: 'orta' },
+        kosullar: { limitKmh: 50, carpismaTipi: 'yandan', carpan: 'A', bolge: 'orta', isik: { A: 'kirmizi', B: 'yesil' } },
         A: { yon: 'güney yönünden', hizKmh: 62, izM: 9, ihlaller: ['kirmizi-isik'] },
         B: { yon: 'doğu yönünden', hizKmh: 45, izM: 0 },
     },
@@ -374,7 +385,7 @@ export const SABLONLAR: readonly SablonSenaryo[] = [
         etiket: 'Şehirlerarası',
         cevre: kirsalYolCevresi,
         P: { x: -0.23, z: 1.86 },
-        kosullar: { limitKmh: 90, carpismaTipi: 'kafa-kafaya', carpan: 'B' },
+        kosullar: { limitKmh: 90, carpismaTipi: 'kafa-kafaya', carpan: 'B', aydinlatma: 'aksam' },
         A: { yon: 'batı yönünden', hizKmh: 78, izM: 16 },
         B: { yon: 'doğu yönünden', hizKmh: 88, izM: 6, ihlaller: ['karsi-serit'], tur: 'kamyonet' },
     },
@@ -385,7 +396,7 @@ export const SABLONLAR: readonly SablonSenaryo[] = [
         etiket: 'Şehir içi',
         cevre: bulvarCevresi,
         P: { x: 40, z: 4.875 },
-        kosullar: { limitKmh: 50, carpismaTipi: 'arkadan', carpan: 'A' },
+        kosullar: { limitKmh: 50, carpismaTipi: 'arkadan', carpan: 'A', isik: { A: 'kirmizi', B: 'kirmizi' } },
         A: { yon: 'batı yönünden', hizKmh: 64, izM: 11, ihlaller: ['arkadan-carpma', 'dikkatsizlik'] },
         B: { yon: 'batı yönünden', hizKmh: 30, izM: 6, tur: 'suv' },
     },
@@ -396,7 +407,7 @@ export const SABLONLAR: readonly SablonSenaryo[] = [
         etiket: 'Yaya',
         cevre: yayaGecidiCevresi,
         P: { x: 0, z: 2.25 },
-        kosullar: { limitKmh: 50, carpismaTipi: 'otomatik', carpan: 'A' },
+        kosullar: { limitKmh: 50, carpismaTipi: 'otomatik', carpan: 'A', aydinlatma: 'gece', hava: 'yagmur', yuzeyId: 'islak-asfalt' },
         A: { yon: 'batı yönünden', hizKmh: 52, izM: 8, ihlaller: ['yaya-gecidi'] },
         B: { yon: 'kuzey tarafından', tip: 'yaya', hizKmh: 5, izM: 0, kutleKg: 75 },
     },

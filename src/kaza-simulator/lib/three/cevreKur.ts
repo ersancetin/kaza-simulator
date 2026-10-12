@@ -390,7 +390,9 @@ export function statikCevreKur(cevre: Cevre, merkez: Vec2): THREE.Group {
     katman(banket, kaplamaMalzemesi(0xd9cdb0, d.kaldirim, 1), 0.008);
     katman(kaldirim, kaplamaMalzemesi(0xffffff, d.kaldirim, 1), 0.01);
     katman(patika, kaplamaMalzemesi(0xd8cbb6, d.kaldirim, 2), 0.015);
-    katman(asfalt, kaplamaMalzemesi(0xffffff, d.asfalt, 3), 0.02);
+    const asfaltMat = kaplamaMalzemesi(0xffffff, d.asfalt, 3);
+    asfaltMat.name = 'asfalt';
+    katman(asfalt, asfaltMat, 0.02);
     katman(bordur, kaplamaMalzemesi(0xe2e0da, null, 4), 0.03);
     katman(cizgi.beyaz, new THREE.MeshStandardMaterial({ color: 0xf4f4ef, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -10 }), 0.035);
 
@@ -455,7 +457,29 @@ function sokakLambalari(cevre: Cevre, merkez: Vec2, dugumler: readonly KavsakDug
     basGeo.translate(0, 6.86, 1.55);
     const n = yerler.length;
     const govde = new THREE.InstancedMesh(govdeGeo, new THREE.MeshStandardMaterial({ color: 0x5d636b, roughness: 0.45, metalness: 0.7 }), n);
-    const bas = new THREE.InstancedMesh(basGeo, new THREE.MeshStandardMaterial({ color: 0xf3f1ea, emissive: 0xfff2cc, emissiveIntensity: 0.35, roughness: 0.4 }), n);
+    const basMat = new THREE.MeshStandardMaterial({ color: 0xf3f1ea, emissive: 0xfff2cc, emissiveIntensity: 0.35, roughness: 0.4 });
+    basMat.name = 'lamba-basi';
+    const bas = new THREE.InstancedMesh(basGeo, basMat, n);
+    // Gece görünen ışık havuzu: lambanın altında yumuşak sarı leke
+    const havuzGeo = new THREE.CircleGeometry(5.5, 32).rotateX(-Math.PI / 2);
+    havuzGeo.translate(0, 0.06, 2.6);
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d');
+    if (x) {
+        const gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+        gr.addColorStop(0, 'rgba(255,214,150,0.85)');
+        gr.addColorStop(0.55, 'rgba(255,200,130,0.3)');
+        gr.addColorStop(1, 'rgba(255,190,120,0)');
+        x.fillStyle = gr;
+        x.fillRect(0, 0, 128, 128);
+    }
+    const havuzDoku = new THREE.CanvasTexture(c);
+    havuzDoku.userData.tekil = true;
+    const havuz = new THREE.InstancedMesh(havuzGeo, new THREE.MeshBasicMaterial({ map: havuzDoku, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -9, polygonOffsetUnits: -18 }), n);
+    havuz.name = 'isik-havuzu';
+    havuz.visible = false;
+    havuz.renderOrder = 3;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const bir = new THREE.Vector3(1, 1, 1);
@@ -464,10 +488,11 @@ function sokakLambalari(cevre: Cevre, merkez: Vec2, dugumler: readonly KavsakDug
         m.compose(new THREE.Vector3(y.p.x, 0, y.p.z), q, bir);
         govde.setMatrixAt(i, m);
         bas.setMatrixAt(i, m);
+        havuz.setMatrixAt(i, m);
     });
     govde.castShadow = true;
     const g = new THREE.Group();
-    g.add(govde, bas);
+    g.add(govde, bas, havuz);
     return g;
 }
 

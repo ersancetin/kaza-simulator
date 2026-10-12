@@ -2,7 +2,7 @@
 
 // Yalnızca yazdırırken görünen A4 rapor (Yazdır / PDF olarak kaydet).
 
-import { ARAC_TURLERI, GIZLILIK_NOTU, MARKA, YASAL_UYARI } from '../data/kazaData.ts';
+import { ARAC_TURLERI, AYDINLATMA_ADI, GIZLILIK_NOTU, HAVA_ADI, ISIK_ADI, MARKA, YASAL_UYARI } from '../data/kazaData.ts';
 import type { GenelKosullar, KatilimciGirdi, KusurSonuc, SimSonuc, TarafId } from '../types/kazaTypes.ts';
 
 export interface YazdirmaRaporuProps {
@@ -40,6 +40,7 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                     <p className="mt-2 text-[9.5pt] text-[#444]">
                         Konum: {konum || '—'}<br />
                         Rapor tarihi: {new Date().toLocaleString('tr-TR')}<br />
+                        {AYDINLATMA_ADI[kosullar.aydinlatma]} · {HAVA_ADI[kosullar.hava]}{kosullar.isik.A !== 'yok' || kosullar.isik.B !== 'yok' ? ` · Işık (çarpışma anı): A ${ISIK_ADI[kosullar.isik.A]}, B ${ISIK_ADI[kosullar.isik.B]}` : ''}<br />
                         Yol yüzeyi sürtünme katsayısı µ = {kosullar.mu.toFixed(2)} · Hız sınırı {kosullar.limitKmh} km/s · Çarpışma: {sonuc.tip} · Temas anı t = {sonuc.tCarpisma.toFixed(2)} sn
                     </p>
                     {kroki && <img src={kroki} alt="Kaza krokisi" className="mt-3 w-full border border-[#ccc]" style={{ breakInside: 'avoid' }} />}

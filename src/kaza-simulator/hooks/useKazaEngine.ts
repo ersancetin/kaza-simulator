@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ARAC_TURLERI, ISARET_KATALOGU, OSM_YUZEY_ESLEME, SABLONLAR, VARSAYILAN_KOSULLAR, YUZEYLER,
+    ARAC_TURLERI, AYDINLATMA_ADI, HAVA_ADI, HAVA_YUZEY, ISARET_KATALOGU, ISIK_ADI, OSM_YUZEY_ESLEME, SABLONLAR, VARSAYILAN_KOSULLAR, YUZEYLER,
     temsiliKavsak, varsayilanKatilimci,
 } from '../data/kazaData.ts';
 import { kenaraYerlestir, yolAcisi, yolaHizala, uzaklik } from '../lib/geometry.ts';
@@ -14,6 +14,7 @@ import { baslangicHizi, sablonKur, simGirdisiKur, yaklasimListesi } from '../lib
 import { seritRotasi, simuleEt } from '../lib/simulate.ts';
 import { cevreVerisiGetir } from '../lib/osm.ts';
 import { guvenliKaydet, guvenliYukle } from '../lib/depo.ts';
+import { baglantiCoz, baglantiKodla, senaryoDogrula, type SenaryoDosyasi, type SenaryoKaynagi } from '../lib/senaryoDosyasi.ts';
 import type { SahneMotoru, TarafGorunum } from '../lib/three/sahneMotoru.ts';
 import type { VideoSecenek } from '../lib/video.ts';
 import type {
@@ -97,6 +98,7 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
     const [kilitAcik, setKilitAcik] = useState(false);
     const [yazdirmaKroki, setYazdirmaKroki] = useState<string | null>(null);
     const istekRef = useRef<AbortController | null>(null);
+    const [kaynak, setKaynak] = useState<SenaryoKaynagi>({ tip: 'gomulu' });
     const cevreRef = useRef(cevre);
     cevreRef.current = cevre;
     const PRef = useRef(P);
@@ -236,6 +238,29 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
 
     // Hesaplamadan önce geliş yönü önizlemesi
     const bYaklasim = secilenYaklasim('B');
+
+    // Aydınlatma ve hava
+    useEffect(() => {
+        motorRef.current?.ortamAyarla(kosullar.aydinlatma, kosullar.hava);
+    }, [kosullar.aydinlatma, kosullar.hava, motorHazirMi, yolSurum]);
+
+    // Trafik ışığı evreleri: taraf geliş yönleri + çarpışma anı ışık durumu
+    useEffect(() => {
+        const m = motorRef.current;
+        if (!m) return;
+        const yon = (y: Yaklasim | null, yaya: boolean): Vec2 | null => {
+            if (!y) return null;
+            const r = seritRotasi(y, yaya);
+            const a = r[Math.max(0, r.length - 3)];
+            const b = r[r.length - 1];
+            const l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+            return { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
+        };
+        m.isikAyarla({
+            A: { yon: yon(aYaklasim, katilimcilar.A.tip === 'yaya'), durum: kosullar.isik.A },
+            B: { yon: yon(bYaklasim, katilimcilar.B.tip === 'yaya'), durum: kosullar.isik.B },
+        });
+    }, [kosullar.isik, aYaklasim, bYaklasim, katilimcilar.A.tip, katilimcilar.B.tip, motorHazirMi, cevre?.isaretler, sonuc]);
     useEffect(() => {
         const m = motorRef.current;
         if (!m || sonuc) return;
@@ -429,6 +454,7 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
         setKosullar(k.kosullar);
         setKatilimcilar({ A: k.A, B: k.B });
         setSecilenKonum(null);
+        setKaynak({ tip: 'sablon', id });
         sahneyeGec(k.cevre, k.P, s.ad, 'Şablon senaryo — internetsiz çalışır');
     }, [sahneyeGec]);
 
@@ -475,6 +501,7 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
         }
         setKatilimcilar((k) => ({ A: { ...k.A, yaklasimAnahtar: '' }, B: { ...k.B, yaklasimAnahtar: '' } }));
         setKosullar((k) => ({ ...k, carpismaTipi: 'otomatik' }));
+        setKaynak(c.kaynak === 'osm' ? { tip: 'konum', konum: secilenKonum } : { tip: 'gomulu' });
         sahneyeGec(c, nokta, secilenKonum.adres, not);
     }, [secilenKonum, sahneyeGec]);
 
@@ -484,6 +511,118 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
         motorRef.current?.duraklat();
         setEkran('baslangic');
     }, [duzenlemeBitir]);
+
+    // ---- Senaryo kaydet / aç / paylaş ----
+    const senaryoVerisi = useCallback((): SenaryoDosyasi | null => {
+        const c = cevreRef.current;
+        if (!c) return null;
+        return {
+            tur: 'kaza-simulator-senaryo',
+            surum: 1,
+            baslik,
+            kaynak,
+            cevre: kaynak.tip === 'gomulu' || c.kaynak === 'osm' ? c : undefined,
+            P,
+            kosullar,
+            katilimcilar,
+            elleIsaretler: c.isaretler.filter((i) => i.elle),
+            cizilenYollar: c.yollar.filter((y) => y.elle),
+        };
+    }, [P, baslik, katilimcilar, kaynak, kosullar]);
+
+    const senaryoYukle = useCallback(async (d: SenaryoDosyasi) => {
+        let c: Cevre | null = d.cevre ?? null;
+        let not = 'Kayıtlı senaryo';
+        if (!c && d.kaynak.tip === 'sablon') {
+            const s = SABLONLAR.find((v) => v.id === (d.kaynak as { id: string }).id);
+            if (s) c = s.cevre();
+        }
+        if (!c && d.kaynak.tip === 'konum') {
+            setEkran('sahne');
+            setCevreDurumu({ tur: 'yukleniyor', mesaj: 'Paylaşılan konumun yol verileri yükleniyor…' });
+            try {
+                c = await cevreVerisiGetir(d.kaynak.konum.lat, d.kaynak.konum.lon);
+                not = 'Paylaşılan senaryo · OpenStreetMap verisi';
+            } catch {
+                c = null;
+            }
+        }
+        if (!c) {
+            bildir('Senaryonun yol verisi yüklenemedi (çevrimdışı olabilirsiniz).', 'hata');
+            setCevreDurumu({ tur: 'bos' });
+            setEkran('baslangic');
+            return;
+        }
+        if (!d.cevre) {
+            const elleId = new Set(c.isaretler.map((i) => i.id));
+            c = {
+                ...c,
+                isaretler: [...c.isaretler, ...d.elleIsaretler.filter((i) => !elleId.has(i.id))],
+                yollar: [...c.yollar, ...d.cizilenYollar],
+            };
+        }
+        setKosullar(d.kosullar);
+        setKatilimcilar(d.katilimcilar);
+        setKaynak(d.kaynak);
+        setSecilenKonum(d.kaynak.tip === 'konum' ? d.kaynak.konum : null);
+        sahneyeGec(c, d.P, d.baslik, not);
+    }, [bildir, sahneyeGec]);
+
+    const senaryoKaydet = useCallback(() => {
+        const d = senaryoVerisi();
+        if (!d) return;
+        indir(new Blob([JSON.stringify(d)], { type: 'application/json' }), dosyaAdi('json', '-senaryo').replace('.json', '.kaza.json'));
+    }, [senaryoVerisi]);
+
+    const senaryoAc = useCallback(async (dosya: File) => {
+        if (dosya.size > 25_000_000) {
+            bildir('Dosya çok büyük.', 'hata');
+            return;
+        }
+        try {
+            const v: unknown = JSON.parse(await dosya.text());
+            const d = senaryoDogrula(v, VARSAYILAN_KOSULLAR, varsayilanKatilimci('A'), varsayilanKatilimci('B'));
+            if (!d) {
+                bildir('Geçerli bir Kaza Simülatörü senaryo dosyası değil.', 'hata');
+                return;
+            }
+            await senaryoYukle(d);
+            bildir('Senaryo açıldı. “Hesapla ve Canlandır” ile yeniden oynatabilirsiniz.');
+        } catch {
+            bildir('Senaryo dosyası okunamadı.', 'hata');
+        }
+    }, [bildir, senaryoYukle]);
+
+    const baglantiKopyala = useCallback(async () => {
+        const d = senaryoVerisi();
+        if (!d) return;
+        if (d.kaynak.tip === 'gomulu') {
+            bildir('Bu sahne çevrimdışı çizildiği için bağlantıyla paylaşılamıyor; “Senaryoyu kaydet” ile dosya olarak paylaşın.', 'uyari');
+            return;
+        }
+        const kod = await baglantiKodla(d);
+        const url = `${window.location.origin}${window.location.pathname}#senaryo=${kod}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            bildir('Paylaşım bağlantısı kopyalandı. Bağlantıyı açan meslektaşınız aynı sahneyi görür.');
+        } catch {
+            window.prompt('Paylaşım bağlantısı:', url);
+        }
+    }, [bildir, senaryoVerisi]);
+
+    // Açılışta adres çubuğunda paylaşılan senaryo varsa yükle
+    useEffect(() => {
+        const h = window.location.hash;
+        if (!h.startsWith('#senaryo=')) return;
+        void baglantiCoz(h.slice('#senaryo='.length)).then((v) => {
+            const d = senaryoDogrula(v, VARSAYILAN_KOSULLAR, varsayilanKatilimci('A'), varsayilanKatilimci('B'));
+            if (d) void senaryoYukle(d);
+            else bildir('Paylaşım bağlantısı çözülemedi.', 'hata');
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        });
+        // yalnızca açılışta
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const sahneyeDon = useCallback(() => {
         if (cevreRef.current) setEkran('sahne');
@@ -519,8 +658,13 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
     const kosulGuncelle = useCallback((parca: Partial<GenelKosullar>) => {
         setKosullar((k) => {
             const yeni = { ...k, ...parca };
-            if (parca.yuzeyId) {
-                const y = YUZEYLER.find((v) => v.id === parca.yuzeyId);
+            // Yağmur/kar seçilince kuru yüzey otomatik ıslak/karlı yapılır
+            if (parca.hava === 'yagmur' || parca.hava === 'kar') {
+                if (k.yuzeyId.startsWith('kuru') || (parca.hava === 'kar' && k.yuzeyId === 'islak-asfalt')) yeni.yuzeyId = HAVA_YUZEY[parca.hava];
+            }
+            const yid = parca.yuzeyId ?? (yeni.yuzeyId !== k.yuzeyId ? yeni.yuzeyId : undefined);
+            if (yid) {
+                const y = YUZEYLER.find((v) => v.id === yid);
                 if (y) yeni.mu = y.mu;
             }
             return yeni;
@@ -605,7 +749,7 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
         altSatirlar: [
             `Konum: ${baslik || '—'}`,
             `${tarafAdi('A', katilimcilar.A)}  ·  ${tarafAdi('B', katilimcilar.B)}  ·  µ = ${kosullar.mu.toFixed(2)}  ·  Hız sınırı ${kosullar.limitKmh} km/s`,
-            `Oluşturma: ${new Date().toLocaleString('tr-TR')}`,
+            `${AYDINLATMA_ADI[kosullar.aydinlatma]} · ${HAVA_ADI[kosullar.hava]}${kosullar.isik.A !== 'yok' || kosullar.isik.B !== 'yok' ? ` · Işık (çarpışma anı): A ${ISIK_ADI[kosullar.isik.A]}, B ${ISIK_ADI[kosullar.isik.B]}` : ''} · Oluşturma: ${new Date().toLocaleString('tr-TR')}`,
         ],
     }), [baslik, katilimcilar, kosullar]);
 
@@ -686,6 +830,7 @@ export function useKazaEngine(sec: KazaMotoruSecenek) {
         video, kilitAcik, yazdirmaKroki, elleIsaretler, cizilenYollar, yakinIsaretler, motorHazirMi,
         // eylemler
         setSekme, motorBagla, konumSec, konumdanKur, sablonYukle, baslangicaDon, sahneyeDon,
+        senaryoKaydet, senaryoAc, baglantiKopyala,
         katilimciGuncelle, kosulGuncelle, hesapla: () => { let ok = false; korumali(() => { ok = hesapla(); }); return ok; },
         noktaSecimiBaslat, isaretModu, isaretDondur, isaretSil, cizimBaslat, cizimKaydet, yolSil, duzenlemeBitir,
         oynatDuraklat, zamanaGit, adimAt, setOynatmaHizi, setKamera, setGuzergah, kameraSifirla,

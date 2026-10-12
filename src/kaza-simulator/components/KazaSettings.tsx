@@ -2,15 +2,25 @@
 
 // Genel koşullar ve çarpışma kurgusu ayarları.
 
+import { CloudFog, CloudRain, Moon, Snowflake, Sun, Sunset } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { YUZEYLER } from '../data/kazaData.ts';
-import type { CarpismaTipi, CarpmaBolgesi, GenelKosullar, KatilimciGirdi, TarafId } from '../types/kazaTypes.ts';
+import type { CarpismaTipi, CarpmaBolgesi, GenelKosullar, IsikDurumu, KatilimciGirdi, TarafId } from '../types/kazaTypes.ts';
 import { Alan, Baslik, Kart, SayiGirdi, Secim, Segment } from './ui/temel.tsx';
 
 export interface KazaSettingsProps {
     kosullar: GenelKosullar;
     guncelle: (p: Partial<GenelKosullar>) => void;
     katilimcilar: Record<TarafId, KatilimciGirdi>;
+    ihlalEkle: (id: TarafId, ihlal: string) => void;
 }
+
+const ISIK_SECENEK: ReadonlyArray<{ deger: IsikDurumu; etiket: ReactNode }> = [
+    { deger: 'yok', etiket: 'Işık yok' },
+    { deger: 'yesil', etiket: <><span className="h-2.5 w-2.5 rounded-full bg-[#1FA34A]" /> Yeşil</> },
+    { deger: 'sari', etiket: <><span className="h-2.5 w-2.5 rounded-full bg-[#F6C400]" /> Sarı</> },
+    { deger: 'kirmizi', etiket: <><span className="h-2.5 w-2.5 rounded-full bg-[#C8102E]" /> Kırmızı</> },
+];
 
 const TIPLER: ReadonlyArray<{ deger: CarpismaTipi; etiket: string; baslik: string }> = [
     { deger: 'otomatik', etiket: 'Otomatik', baslik: 'Geliş açılarına göre belirlenir' },
@@ -26,7 +36,7 @@ const BOLGELER: ReadonlyArray<{ deger: CarpmaBolgesi; etiket: string }> = [
     { deger: 'arka', etiket: 'Arka kısım' },
 ];
 
-export function KazaSettings({ kosullar, guncelle, katilimcilar }: KazaSettingsProps) {
+export function KazaSettings({ kosullar, guncelle, katilimcilar, ihlalEkle }: KazaSettingsProps) {
     const yayaVar = katilimcilar.A.tip === 'yaya' || katilimcilar.B.tip === 'yaya';
     const carpilan: TarafId = kosullar.carpan === 'A' ? 'B' : 'A';
     return (
@@ -47,6 +57,37 @@ export function KazaSettings({ kosullar, guncelle, katilimcilar }: KazaSettingsP
                             <SayiGirdi deger={kosullar.limitKmh} degisti={(v) => guncelle({ limitKmh: v })} min={10} max={150} adim={5} birim="km/s" />
                         </Alan>
                     </div>
+                </div>
+            </Kart>
+
+            <Kart className="p-4">
+                <Baslik>Işık, görüş ve hava</Baslik>
+                <div className="space-y-3">
+                    <Alan etiket="Aydınlatma">
+                        <Segment ad="Aydınlatma" kucuk secenekler={[{ deger: 'gunduz', etiket: <><Sun className="h-3.5 w-3.5" /> Gündüz</> }, { deger: 'aksam', etiket: <><Sunset className="h-3.5 w-3.5" /> Alacakaranlık</> }, { deger: 'gece', etiket: <><Moon className="h-3.5 w-3.5" /> Gece</> }] as const}
+                            deger={kosullar.aydinlatma} degisti={(v) => guncelle({ aydinlatma: v })} />
+                    </Alan>
+                    <Alan etiket="Hava" ipucu="Yağmur ve kar seçilince kuru yüzey ıslak/karlı yapılır (µ güncellenir).">
+                        <Segment ad="Hava" kucuk secenekler={[{ deger: 'acik', etiket: 'Açık' }, { deger: 'yagmur', etiket: <><CloudRain className="h-3.5 w-3.5" /> Yağmur</> }, { deger: 'sis', etiket: <><CloudFog className="h-3.5 w-3.5" /> Sis</> }, { deger: 'kar', etiket: <><Snowflake className="h-3.5 w-3.5" /> Kar</> }] as const}
+                            deger={kosullar.hava} degisti={(v) => guncelle({ hava: v })} />
+                    </Alan>
+                    {(['A', 'B'] as const).map((id) => {
+                        const yaya = katilimcilar[id].tip === 'yaya';
+                        const ihlal = yaya ? 'yaya-kirmizi' : 'kirmizi-isik';
+                        const oneri = kosullar.isik[id] === 'kirmizi' && !katilimcilar[id].ihlaller.includes(ihlal);
+                        return (
+                            <Alan key={id} etiket={`${id} tarafının ışığı (çarpışma anında)`}>
+                                <Segment ad={`${id} ışığı`} kucuk secenekler={ISIK_SECENEK} deger={kosullar.isik[id]} degisti={(v) => guncelle({ isik: { ...kosullar.isik, [id]: v } })} />
+                                {oneri && (
+                                    <button type="button" onClick={() => ihlalEkle(id, ihlal)}
+                                        className="mt-1.5 rounded-full bg-aha-red/10 px-3 py-1 text-[11.5px] font-semibold text-aha-red hover:bg-aha-red/15">
+                                        + “Kırmızı ışık ihlali”ni {id} tarafına ekle
+                                    </button>
+                                )}
+                            </Alan>
+                        );
+                    })}
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">Canlandırmada ışık çarpışma anındaki renge göre yeşil → sarı (3 sn) → kırmızı akışıyla gösterilir; kesişen yöndeki ışık tamamlayıcı renkte yanar.</p>
                 </div>
             </Kart>
 

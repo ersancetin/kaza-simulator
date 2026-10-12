@@ -52,3 +52,41 @@ test('kusur 8lik dilim', () => {
     assert.equal(k.A.sekizlik, '8/8');
     assert.equal(k.B.etiket.sinif, 'kusursuz');
 });
+
+import { isikRengi, isikAkisDurumu } from '../src/kaza-simulator/lib/isik.ts';
+
+test('ışık evreleri', () => {
+    assert.equal(isikRengi('kirmizi', 0, 6), 'yesil');
+    assert.equal(isikRengi('kirmizi', 2, 6), 'sari');
+    assert.equal(isikRengi('kirmizi', 5, 6), 'kirmizi');
+    assert.equal(isikRengi('yok', 5, 6), null);
+    // Güneyden kuzeye giden A (yön -z) için güneye bakan ışık (yüz +z) A'nın durumunu alır
+    const t = { A: { yon: { x: 0, z: -1 }, durum: 'kirmizi' as const }, B: { yon: { x: -1, z: 0 }, durum: 'yesil' as const } };
+    assert.equal(isikAkisDurumu({ x: 0, z: 1 }, t), 'kirmizi');
+    assert.equal(isikAkisDurumu({ x: 1, z: 0 }, t), 'yesil');
+    assert.equal(isikAkisDurumu({ x: 0, z: -1 }, t), 'kirmizi');
+});
+
+import { baglantiCoz, baglantiKodla, senaryoDogrula } from '../src/kaza-simulator/lib/senaryoDosyasi.ts';
+import { VARSAYILAN_KOSULLAR, varsayilanKatilimci } from '../src/kaza-simulator/data/kazaData.ts';
+
+test('senaryo bağlantısı gidiş-dönüş ve doğrulama', async () => {
+    const k = sablonKur(SABLONLAR[0]);
+    const d = {
+        tur: 'kaza-simulator-senaryo' as const, surum: 1 as const, baslik: 'Test', kaynak: { tip: 'sablon' as const, id: SABLONLAR[0].id },
+        P: k.P, kosullar: k.kosullar, katilimcilar: { A: k.A, B: k.B }, elleIsaretler: [], cizilenYollar: [],
+    };
+    const kod = await baglantiKodla(d);
+    const geri = senaryoDogrula(await baglantiCoz(kod), VARSAYILAN_KOSULLAR, varsayilanKatilimci('A'), varsayilanKatilimci('B'));
+    assert.ok(geri);
+    assert.equal(geri.katilimcilar.A.hizKmh, k.A.hizKmh);
+    assert.deepEqual(geri.kosullar.isik, k.kosullar.isik);
+    // Kötü niyetli / bozuk girdi
+    assert.equal(senaryoDogrula({ tur: 'x' }, VARSAYILAN_KOSULLAR, varsayilanKatilimci('A'), varsayilanKatilimci('B')), null);
+    const kotu = senaryoDogrula({ ...d, katilimcilar: { A: { hizKmh: 1e9, ihlaller: ['<script>', 'kirmizi-isik'], tur: 'uzay-gemisi' } } }, VARSAYILAN_KOSULLAR, varsayilanKatilimci('A'), varsayilanKatilimci('B'));
+    assert.ok(kotu);
+    assert.equal(kotu.katilimcilar.A.hizKmh, 250);
+    assert.deepEqual(kotu.katilimcilar.A.ihlaller, ['kirmizi-isik']);
+    assert.equal(kotu.katilimcilar.A.tur, 'otomobil');
+    assert.equal(await baglantiCoz('zbozuk!!'), null);
+});

@@ -92,7 +92,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
     return (
         <RadixTooltip.Provider>
             {m.ekran === 'baslangic' && (
-                <BaslangicEkrani secilen={m.secilenKonum} konumSec={m.konumSec} kur={() => void m.konumdanKur()} sablonYukle={m.sablonYukle} uyariAc={() => setUyariAcik(true)} />
+                <BaslangicEkrani secilen={m.secilenKonum} konumSec={m.konumSec} kur={() => void m.konumdanKur()} sablonYukle={m.sablonYukle} uyariAc={() => setUyariAcik(true)} senaryoAc={(f) => void m.senaryoAc(f)} />
             )}
 
             {sahneAcildi && (
@@ -118,7 +118,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                 {panelAcik ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />} Panel
                             </Buton>
                         </span>
-                        <DisaAktarMenusu sonucVar={!!m.sonuc} fotoIndir={m.fotoIndir} krokiIndir={m.krokiIndir} videoKaydet={m.videoKaydet} yazdir={m.yazdir} videoHata={m.video.hata} />
+                        <DisaAktarMenusu senaryoKaydet={m.senaryoKaydet} baglantiKopyala={() => void m.baglantiKopyala()} senaryoAc={(f) => void m.senaryoAc(f)} sonucVar={!!m.sonuc} fotoIndir={m.fotoIndir} krokiIndir={m.krokiIndir} videoKaydet={m.videoKaydet} yazdir={m.yazdir} videoHata={m.video.hata} />
                     </header>
 
                     <div className="relative flex min-h-0 flex-1">
@@ -154,7 +154,7 @@ export function KazaClient({ isAuthenticated = true, isProtected = false, onRequ
                                             {m.cevreDurumu.tur === 'hazir' && <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">{m.cevreDurumu.not}</p>}
                                         </Kart>
 
-                                        <KazaSettings kosullar={m.kosullar} guncelle={m.kosulGuncelle} katilimcilar={m.katilimcilar} />
+                                        <KazaSettings kosullar={m.kosullar} guncelle={m.kosulGuncelle} katilimcilar={m.katilimcilar} ihlalEkle={(id, ihlal) => m.katilimciGuncelle(id, { ihlaller: [...m.katilimcilar[id].ihlaller, ihlal] })} />
 
                                         {m.cevre?.kaynak === 'osm' && aYolu && (
                                             <Kart className="p-4">

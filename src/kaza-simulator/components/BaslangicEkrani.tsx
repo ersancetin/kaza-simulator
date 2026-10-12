@@ -1,6 +1,6 @@
 'use client';
 
-import { Car, ChevronRight, HeartHandshake, Loader2, MapPin, PersonStanding, Route, Search, Waypoints, WifiOff, X } from 'lucide-react';
+import { Car, ChevronRight, FolderOpen, HeartHandshake, Loader2, MapPin, PersonStanding, Route, Search, Waypoints, WifiOff, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { SABLONLAR } from '../data/kazaData.ts';
 import { Altbilgi, MarkaBasligi } from './Marka.tsx';
@@ -18,9 +18,10 @@ export interface BaslangicEkraniProps {
     kur: () => void;
     sablonYukle: (id: string) => void;
     uyariAc: () => void;
+    senaryoAc: (f: File) => void;
 }
 
-export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc }: BaslangicEkraniProps) {
+export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc, senaryoAc }: BaslangicEkraniProps) {
     const [sorgu, setSorgu] = useState('');
     const [sonuclar, setSonuclar] = useState<SecilenKonum[]>([]);
     const [araniyor, setAraniyor] = useState(false);
@@ -180,6 +181,10 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc }
                                 );
                             })}
                         </ul>
+                        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-full border border-dashed border-border px-4 py-2.5 text-[12.5px] font-semibold text-muted-foreground transition hover:border-aha-red/50 hover:text-aha-red">
+                            <FolderOpen className="h-4 w-4" /> Kayıtlı senaryo aç (.kaza.json)
+                            <input type="file" accept=".json,application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) senaryoAc(f); e.target.value = ''; }} />
+                        </label>
                         {cevrimdisi && (
                             <p className="mt-4 rounded-2xl bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-800">
                                 Çevrimdışısınız: harita ve gerçek yol verisi yüklenemez; hazır senaryolar ve tüm hesaplamalar çalışmaya devam eder.
