@@ -55,6 +55,8 @@ export interface Ihlal {
     dayanak: string;
     /** KTK m.84'te sayılan asli kusur hâlinin bendi (varsa), ör. 'a', 'b–c' */
     madde84?: string;
+    /** İlgili KTK hükümlerinin anahtarları (data/ktkMetinleri.ts), birebir alıntı için */
+    hukumler: readonly string[];
 }
 
 export type YolSinifi =
@@ -301,6 +303,8 @@ export interface KusurGerekce {
     dayanak: string;
     puan: number;
     madde84?: string;
+    /** İlgili KTK hükümlerinin anahtarları (data/ktkMetinleri.ts), birebir alıntı için */
+    hukumler: readonly string[];
 }
 
 export type KusurSinifi = 'kusursuz' | 'asli' | 'tali';

@@ -6,6 +6,7 @@
 import { IHLALLER, YAYA_IHLALLERI } from '../data/kazaData.ts';
 import type { Ihlal, KusurGerekce, KusurGirdi, KusurSonuc, KusurTaraf } from '../types/kazaTypes.ts';
 
+const HIZ_HUKUMLERI: readonly string[] = ['51/1', '52/1-b'];
 const TUM_IHLALLER: readonly Ihlal[] = [...IHLALLER, ...YAYA_IHLALLERI];
 
 /** Hız aşımı puanı: limitin %10'una kadar tolere edilir, üzeri kademeli ağırlaşır */
@@ -14,9 +15,9 @@ export function hizAsimiPuani(hizKmh: number | null, limitKmh: number | null): K
     const oran = hizKmh / limitKmh;
     const yuzde = Math.round((oran - 1) * 100);
     if (oran <= 1.1) return null;
-    if (oran <= 1.3) return { ad: `Hız sınırının aşılmış olması (%${yuzde})`, puan: 35, dayanak: 'KTK m.51/1 (hız sınırlarına uyma) ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir' };
-    if (oran <= 1.5) return { ad: `Hız sınırının ciddi aşılmış olması (%${yuzde})`, puan: 65, dayanak: 'KTK m.51/1 ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir' };
-    return { ad: `Hız sınırının ağır aşılmış olması (%${yuzde})`, puan: 100, dayanak: 'KTK m.51/1 ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir, ağır aşım yüksek ağırlıkla hesaba katılmıştır' };
+    if (oran <= 1.3) return { ad: `Hız sınırının aşılmış olması (%${yuzde})`, puan: 35, dayanak: 'KTK m.51/1 (hız sınırlarına uyma) ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir', hukumler: HIZ_HUKUMLERI };
+    if (oran <= 1.5) return { ad: `Hız sınırının ciddi aşılmış olması (%${yuzde})`, puan: 65, dayanak: 'KTK m.51/1 ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir', hukumler: HIZ_HUKUMLERI };
+    return { ad: `Hız sınırının ağır aşılmış olması (%${yuzde})`, puan: 100, dayanak: 'KTK m.51/1 ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir, ağır aşım yüksek ağırlıkla hesaba katılmıştır', hukumler: HIZ_HUKUMLERI };
 }
 
 function tarafPuani(g: KusurGirdi): { toplam: number; gerekceler: KusurGerekce[] } {
@@ -26,7 +27,7 @@ function tarafPuani(g: KusurGirdi): { toplam: number; gerekceler: KusurGerekce[]
         const k = TUM_IHLALLER.find((i) => i.id === id);
         if (!k) continue;
         toplam += k.puan;
-        gerekceler.push({ ad: k.ad, dayanak: k.dayanak, puan: k.puan, madde84: k.madde84 });
+        gerekceler.push({ ad: k.ad, dayanak: k.dayanak, puan: k.puan, madde84: k.madde84, hukumler: k.hukumler });
     }
     const hiz = hizAsimiPuani(g.hizKmh, g.limitKmh);
     if (hiz) {

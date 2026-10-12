@@ -70,8 +70,13 @@ input[type="range"].zaman:focus-visible { box-shadow: 0 0 0 4px oklch(0.502 0.19
 /* Yazdırma: yalnızca rapor alanı */
 #yazdirma-alani { display: none; }
 @media print {
-    @page { size: A4; margin: 14mm; }
+    @page {
+        size: A4;
+        margin: 12mm 13mm 14mm;
+        @bottom-left { content: "Kaza Simülatörü — simülasyon çıktısıdır, kusur tespiti değildir"; font: 600 7pt Montserrat, sans-serif; color: #9a9290; }
+        @bottom-right { content: counter(page) " / " counter(pages); font: 600 7.5pt Montserrat, sans-serif; color: #9a9290; }
+    }
     body > *:not(#yazdirma-alani) { display: none !important; }
-    #yazdirma-alani { display: block; }
+    #yazdirma-alani { display: block; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { background: #fff; }
 }

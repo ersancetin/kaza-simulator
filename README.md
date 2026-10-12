@@ -57,6 +57,7 @@ Radix UI · Lucide · Three.js.
 src/kaza-simulator/
 ├── types/kazaTypes.ts        # Tüm tipler
 ├── data/kazaData.ts          # Yüzeyler, araç türleri, ihlaller, levha kataloğu, şablon senaryolar
+├── data/ktkMetinleri.ts      # KTK hükümlerinden birebir alıntılar
 ├── hooks/
 │   ├── useKazaEngine.ts      # Presenter hook: durum, iş mantığı, dışa aktarım, yetki kalkanı
 │   ├── useKlavyeKisayollari.ts
@@ -101,24 +102,31 @@ karşılaştırılmıştır. m.84 yalnızca **araç sürücüleri** için asli k
 cümlesine göre bu hâllerden biri birden fazla sürücü tarafından yapılmışsa oran yönetmelik esaslarına göre
 belirlenir (uygulama bu durumda ayrıca uyarı gösterir).
 
+**Birebir alıntılar.** İlgili hükümlerin metinleri `data/ktkMetinleri.ts` dosyasında resmî metinden birebir
+parçalar hâlinde tutulur (giriş cümlesi + ilgili bent + kapanış; atlanan kısımlar “…”). Sonuç panelinde her
+gerekçenin altında "Kanun metni" olarak, PDF raporunda ise tekrarsız ve kanun sırasıyla numaralı bir
+"birebir alıntı" bölümü olarak gösterilir. Bir davranış birden fazla hükümle ilgili olabildiğinden her ihlal
+birden çok hükme bağlanabilir; testler her bağlantının var olduğunu ve m.84 bendinin alıntısının
+eklendiğini denetler.
+
 | İhlal (kullanıcı beyanı) | İlgili olabilecek hüküm | m.84 |
 |---|---|---|
 | Kırmızı ışıkta / yetkili memurun dur işaretinde geçme | m.47/1-b | a |
-| Taşıt giremez yola / karşı yönün şeridine girme | m.46/1-a | b–c (iki şeritli yolda g) |
+| Taşıt giremez yola / karşı yönün şeridine girme | m.46/1-a, h | b–c (iki şeritli yolda g) |
 | Arkadan çarpma | m.56/1-c, m.52/1-c | d |
-| Geçme yasağı olan yerde geçme | m.54 | e |
-| Doğrultu değiştirme / dönüş manevrası | m.53, m.67 | f, j |
+| Geçme yasağı olan yerde geçme | m.54/1-b | e |
+| Doğrultu değiştirme / dönüş manevrası | m.53, m.67/1-a, c | f, j |
 | Şeride tecavüz / kurala aykırı şerit değiştirme | m.46/1-b, c; m.56/1-a | g |
-| Kavşakta geçiş önceliğine uymama | m.57 | h |
-| Dar kaplamada geçiş önceliğine uymama | m.56/1-b, e | i |
-| Yerleşim dışı taşıt yolunda park/duraklama, tedbirsizlik | m.59 | k |
+| Kavşakta geçiş önceliğine uymama | m.57/1-a, c | h |
+| Dar kaplamada geçiş önceliğine uymama | m.56/1-b | i |
+| Yerleşim dışı taşıt yolunda park/duraklama, tedbirsizlik | m.59/1 | k |
 | Kurallara uygun park edilmiş araca çarpma | — | l |
-| Alkol / uyuşturucu etkisinde sürme | m.48 | — |
-| Yaya/okul geçidinde ilk geçiş hakkı vermeme | m.74, m.52/1-a | — |
+| Alkol / uyuşturucu etkisinde sürme | m.48/1 | — |
+| Yaya/okul geçidinde ilk geçiş hakkı vermeme | m.74/1, m.52/1-a, m.53 | — |
 | Hızı şartlara uydurmama | m.52/1-a, b | — |
 | Seyir hâlinde telefon / dikkatsiz sürüş | m.73/1 | — |
 | Hız sınırını aşma (otomatik) | m.51/1, m.52/1-b | — |
-| Yaya: ışığa uymama · geçit dışından geçme · taşıt yolunda yürüme · kontrolsüz geçme | m.68/1-b-1 & m.47/1-b · m.68/1-b · m.68/1-a · m.68/1-b, c | — |
+| Yaya: ışığa uymama · geçit dışından geçme · taşıt yolunda yürüme · kontrolsüz geçme | m.68/1-b-1 & m.47/1-b · m.68/1-b · m.68/1-a · m.68/1-b (son cümle), c | — |
 
 ## Yasal uyarı
 
