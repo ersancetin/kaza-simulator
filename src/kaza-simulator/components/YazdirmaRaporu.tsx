@@ -101,11 +101,11 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                     <img src={MARKA.logo} alt="" className="h-[20mm] w-[20mm] object-contain" />
                 </div>
                 <div className="flex-1 py-[4mm]">
-                    <div className="text-[7.5pt] font-bold tracking-[0.18em] opacity-85">{MARKA.kurumBuyuk}</div>
-                    <h1 className="mt-[1mm] flex items-center gap-[2.5mm] text-[17pt] font-extrabold leading-tight tracking-[-0.01em]">
-                        Trafik Kazası Simülasyon Raporu
-                        <span className="rounded-full border border-white/60 px-[2mm] py-[0.3mm] text-[7pt] font-bold tracking-[0.12em]">SİMÜLASYON</span>
-                    </h1>
+                    <div className="flex items-center gap-[2.5mm] text-[7.5pt] font-bold tracking-[0.18em]">
+                        <span className="opacity-85">{MARKA.kurumBuyuk}</span>
+                        <span className="rounded-full bg-white px-[2mm] py-[0.3mm] text-[6.5pt] tracking-[0.12em]" style={{ color: KIRMIZI }}>SİMÜLASYON</span>
+                    </div>
+                    <h1 className="mt-[1mm] text-[17pt] font-extrabold leading-tight tracking-[-0.01em]">Trafik Kazası Simülasyon Raporu</h1>
                     <div className="mt-[1mm] text-[8.5pt] opacity-90">{MARKA.uygulama} · Meslektaşlarımızın faydasına hazırlanmıştır</div>
                 </div>
                 <div className="flex flex-col justify-center gap-[1mm] border-l border-white/25 px-[5mm] text-[7.5pt] leading-tight">

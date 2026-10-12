@@ -43,7 +43,7 @@ export function SimulasyonUyarisi({ tur = 'kutu', className, tikla }: { tur?: 'k
         return (
             <button type="button" onClick={tikla}
                 className={cn('flex w-full items-center justify-center gap-1.5 bg-aha-red/[0.07] px-3 py-1.5 text-[11.5px] font-semibold text-aha-red', className)}>
-                <Scale className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{ANA_UYARI.kisa}</span>
+                <Scale className="h-3.5 w-3.5 shrink-0" /> <span className="text-left leading-snug">{ANA_UYARI.kisa}</span>
             </button>
         );
     }
