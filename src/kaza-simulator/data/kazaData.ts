@@ -79,26 +79,60 @@ export const YAYA_BOYUT = { boy: 0.45, en: 0.55, yukseklik: 1.72, kutle: 75 } as
 export const TARAF_RENK: Readonly<Record<TarafId, string>> = { A: '#C81D25', B: '#1F5FBF' };
 
 // ---- Kural ihlalleri (2918 sayılı KTK) ----
+// Madde atıfları 2918 sayılı KTK'nın resmî metniyle (mevzuat.gov.tr, doğrulama 2026-08-19)
+// karşılaştırılmıştır. İfade bilinçli olarak "ilgili olabilir" biçimindedir: uygulama
+// kusur tespiti yapmaz. m.84 yalnızca araç sürücüleri için asli kusur hâllerini sayar.
+const M84 = (bent: string): string => `m.84/${bent} (asli kusur sayılan hâller) kapsamında değerlendirilebilir`;
+const M84_DISI = "m.84'te sayılan asli kusur hâlleri arasında değildir; oran yönetmelik esaslarına göre belirlenir";
+
 export const IHLALLER: readonly Ihlal[] = [
-    { id: 'kirmizi-isik', ad: 'Kırmızı ışık ihlali', puan: 100, dayanak: 'KTK m.47 ile ilgili olabilir; m.84 asli kusur hâlleri kapsamında değerlendirilebilir' },
-    { id: 'gecis-onceligi', ad: 'Kavşakta geçiş önceliğine uymama', puan: 100, dayanak: 'KTK m.57 ile ilgili olabilir; m.84 asli kusur hâlleri kapsamında değerlendirilebilir' },
-    { id: 'karsi-serit', ad: 'Karşı şeride / yasak yöne girme', puan: 100, dayanak: 'KTK m.46 ile ilgili olabilir; m.84 asli kusur hâlleri kapsamında değerlendirilebilir' },
-    { id: 'arkadan-carpma', ad: 'Arkadan çarpma (takip mesafesi ihlali)', puan: 100, dayanak: 'KTK m.56 ile ilgili olabilir; m.84 asli kusur hâlleri kapsamında değerlendirilebilir' },
-    { id: 'yasak-sollama', ad: 'Geçme (sollama) yasağı ihlali', puan: 90, dayanak: 'KTK m.54 ile ilgili olabilir; m.84 asli kusur hâlleri kapsamında değerlendirilebilir' },
-    { id: 'manevra', ad: 'Kurallara aykırı dönüş / manevra', puan: 70, dayanak: 'KTK m.53 ile ilgili olabilir; m.84 asli kusur hâlleri kapsamında değerlendirilebilir' },
-    { id: 'serit-ihlali', ad: 'Şerit izleme / değiştirme kuralı ihlali', puan: 55, dayanak: 'KTK m.56 (şerit izleme ve değiştirme) ile ilgili olabilir' },
-    { id: 'alkol', ad: 'Alkol / uyuşturucu etkisinde sürüş', puan: 80, dayanak: 'KTK m.48 ile ilgili olabilir' },
-    { id: 'dikkatsizlik', ad: 'Dikkatsizlik (telefon vb.)', puan: 35, dayanak: 'Genel dikkat ve özen yükümlülüğü — tali kusur ağırlığında değerlendirilebilir' },
-    { id: 'gerekli-tedbir', ad: 'Tehlikeyi görünce tedbir almama', puan: 25, dayanak: 'KTK m.52 (hızın şartlara uydurulması) ile ilgili olabilir' },
-    { id: 'yaya-gecidi', ad: 'Yaya geçidinde yayaya öncelik vermeme', puan: 100, dayanak: 'KTK m.74 ile ilgili olabilir' },
+    { id: 'kirmizi-isik', ad: 'Kırmızı ışıkta veya yetkili memurun dur işaretinde geçme', puan: 100, madde84: 'a',
+        dayanak: `KTK m.47/1-b (trafik ışıklarına uyma) ile ilgili olabilir; ${M84('a')}` },
+    { id: 'karsi-serit', ad: 'Taşıt giremez yola veya karşı yönün şeridine girme', puan: 100, madde84: 'b–c',
+        dayanak: `KTK m.46/1-a (sağdan gitme) ile ilgili olabilir; taşıt giremez yol, bölünmüş yol veya ikiden fazla şeritli yolda ${M84('b–c')}; iki şeritli yolda m.84/g (şeride tecavüz) yönünden değerlendirilebilir` },
+    { id: 'arkadan-carpma', ad: 'Arkadan çarpma (güvenli takip mesafesi bırakmama)', puan: 100, madde84: 'd',
+        dayanak: `KTK m.56/1-c ve m.52/1-c (araçlar arası mesafe) ile ilgili olabilir; ${M84('d')}` },
+    { id: 'yasak-sollama', ad: 'Geçme yasağı olan yerde geçme', puan: 100, madde84: 'e',
+        dayanak: `KTK m.54 (geçme kural ve yasakları) ile ilgili olabilir; ${M84('e')}` },
+    { id: 'manevra', ad: 'Doğrultu değiştirme / dönüş manevrasını kurala aykırı yapma', puan: 90, madde84: 'f, j',
+        dayanak: `KTK m.53 (dönüş kuralları) ve m.67 (manevralar) ile ilgili olabilir; ${M84('f, j')}` },
+    { id: 'serit-ihlali', ad: 'Şeride tecavüz / kurala aykırı şerit değiştirme', puan: 90, madde84: 'g',
+        dayanak: `KTK m.46/1-b, c ve m.56/1-a (şerit izleme) ile ilgili olabilir; ${M84('g')}` },
+    { id: 'gecis-onceligi', ad: 'Kavşakta geçiş önceliğine uymama', puan: 100, madde84: 'h',
+        dayanak: `KTK m.57 (kavşaklarda geçiş hakkı) ile ilgili olabilir; ${M84('h')}` },
+    { id: 'dar-yol-oncelik', ad: 'Kaplamanın dar olduğu yerde geçiş önceliğine uymama', puan: 90, madde84: 'i',
+        dayanak: `KTK m.56/1-b, e (gelen trafikle karşılaşma, geçiş kolaylığı) ile ilgili olabilir; ${M84('i')}` },
+    { id: 'park-tedbir', ad: 'Yerleşim dışı taşıt yolunda park/duraklama veya gerekli tedbiri almama', puan: 90, madde84: 'k',
+        dayanak: `KTK m.59 ile ilgili olabilir; ${M84('k')}` },
+    { id: 'parkli-araca-carpma', ad: 'Kurallara uygun park edilmiş araca çarpma', puan: 100, madde84: 'l',
+        dayanak: `${M84('l')}` },
+    { id: 'alkol', ad: 'Alkol, uyuşturucu veya uyarıcı madde etkisinde araç sürme', puan: 80,
+        dayanak: `KTK m.48 ile ilgili olabilir; ${M84_DISI}` },
+    { id: 'yaya-gecidi', ad: 'Yaya veya okul geçidinde yayaya ilk geçiş hakkı vermeme', puan: 90,
+        dayanak: `KTK m.74 ve m.52/1-a (geçide yaklaşırken yavaşlama) ile ilgili olabilir; ${M84_DISI}` },
+    { id: 'gerekli-tedbir', ad: 'Hızı yol, görüş ve hava şartlarına uydurmama', puan: 35,
+        dayanak: `KTK m.52/1-a, b ile ilgili olabilir; ${M84_DISI}` },
+    { id: 'dikkatsizlik', ad: 'Seyir hâlinde telefon kullanma / dikkatsiz sürüş', puan: 35,
+        dayanak: `KTK m.73/1 (telefon kullanma yasağı, saygısız sürüş) ile ilgili olabilir; ${M84_DISI}` },
 ];
 
+// Yayalar m.84 kapsamında değildir (m.84 araç sürücülerini sayar); m.68 esas alınır
 export const YAYA_IHLALLERI: readonly Ihlal[] = [
-    { id: 'yaya-kirmizi', ad: 'Kırmızı ışıkta / yaya kırmızısında geçme', puan: 80, dayanak: 'KTK m.68 (ışıklı işaretlere uyma) ile ilgili olabilir' },
-    { id: 'yaya-gecit-disi', ad: 'Yakında geçit varken geçit dışından geçme', puan: 60, dayanak: 'KTK m.68 ile ilgili olabilir' },
-    { id: 'yaya-tasit-yolu', ad: 'Taşıt yolunda yürüme / yola ani çıkış', puan: 50, dayanak: 'KTK m.68 ile ilgili olabilir' },
-    { id: 'yaya-dikkatsiz', ad: 'Yola kontrolsüz / dikkatsiz çıkma', puan: 35, dayanak: 'KTK m.68 ile ilgili olabilir' },
+    { id: 'yaya-kirmizi', ad: 'Geçitte yaya ışığına / trafik ışığına uymama', puan: 80,
+        dayanak: 'KTK m.68/1-b-1 ve m.47/1-b ile ilgili olabilir' },
+    { id: 'yaya-gecit-disi', ad: 'Yakında (≈100 m) geçit veya kavşak varken başka yerden geçme', puan: 60,
+        dayanak: 'KTK m.68/1-b ile ilgili olabilir' },
+    { id: 'yaya-tasit-yolu', ad: 'Yaya yolu varken taşıt yolunda yürüme', puan: 50,
+        dayanak: 'KTK m.68/1-a ile ilgili olabilir' },
+    { id: 'yaya-dikkatsiz', ad: 'Yolu kontrol etmeden / trafiği tehlikeye düşürecek şekilde geçme', puan: 45,
+        dayanak: 'KTK m.68/1-b (son cümle) ve m.68/1-c ile ilgili olabilir' },
 ];
+
+export const MEVZUAT_KAYNAGI = {
+    ad: '2918 sayılı Karayolları Trafik Kanunu (RG 18.10.1983, 18195)',
+    url: 'https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=2918&MevzuatTur=1&MevzuatTertip=5',
+    dogrulama: 'Madde metinleri resmî metinle karşılaştırılmıştır (mevzuat.gov.tr, 19.08.2026 tarihli doğrulanmış derleme).',
+} as const;
 
 // ---- Levha ve öge kataloğu (palet) ----
 export type IsaretGrubu = 'kontrol' | 'yasak' | 'bilgi' | 'zemin' | 'cevre';

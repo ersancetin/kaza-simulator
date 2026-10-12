@@ -4,6 +4,7 @@
 
 import { CircleHelp, FileImage, Printer, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { MEVZUAT_KAYNAGI } from '../data/kazaData.ts';
 import { siddetEtiketi } from '../lib/physics.ts';
 import { HizGrafigi } from './HizGrafigi.tsx';
 import type { KatilimciGirdi, KusurSonuc, SimSonuc, TarafId, TarafSonuc } from '../types/kazaTypes.ts';
@@ -123,6 +124,11 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
                     <div className="flex min-w-14 items-center justify-center bg-taraf-b transition-all" style={{ flex: Math.max(yuzde('B'), 9) }}>B %{kusur.B.yuzdeMetin}</div>
                 </div>
                 <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">Oranlar, yalnızca girdiğiniz ihlal ve hız bilgilerine göre 8’lik dilimle hesaplanmış <b>olası</b> bir dağılımdır; somut olayda farklı sonuç çıkabilir.</p>
+                {kusur.coklu84 && (
+                    <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                        Her iki tarafta da KTK m.84’te sayılan hâllerden biri işaretlendi. Maddenin son cümlesine göre bu durumda kusur oranı yönetmelikte belirtilen esaslara göre belirlenir; aşağıdaki dağılım yalnızca bir ön fikirdir.
+                    </p>
+                )}
                 {kusur.belirsiz && <p className="mt-2 text-[12px] text-muted-foreground">İki taraf için de ihlal işaretlenmediğinden olası dağılım belirlenemedi; %50–%50 varsayıldı.</p>}
                 <div className="mt-3 space-y-3">
                     {(['A', 'B'] as const).map((id) => (
@@ -136,12 +142,21 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
                             </div>
                             <ul className="mt-1 space-y-0.5 pl-1 text-[12px] leading-snug text-muted-foreground">
                                 {kusur[id].gerekceler.length
-                                    ? kusur[id].gerekceler.map((g) => <li key={g.ad}>• {g.ad} söz konusu olabilir <i className="opacity-80">({g.dayanak})</i></li>)
+                                    ? kusur[id].gerekceler.map((g) => (
+                        <li key={g.ad}>
+                            • {g.ad} söz konusu olabilir
+                            {g.madde84 && <Rozet renk="kirmizi" className="ml-1 align-middle">m.84/{g.madde84}</Rozet>}
+                            <i className="block pl-2.5 opacity-80">{g.dayanak}</i>
+                        </li>
+                    ))
                                     : <li>• Olası ihlal işaretlenmedi</li>}
                             </ul>
                         </div>
                     ))}
                 </div>
+                <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+                    Atıflar: <a href={MEVZUAT_KAYNAGI.url} target="_blank" rel="noopener" className="font-semibold text-aha-red underline-offset-2 hover:underline">{MEVZUAT_KAYNAGI.ad}</a>. {MEVZUAT_KAYNAGI.dogrulama}
+                </p>
                 <p className="mt-3 rounded-2xl border border-aha-red/25 bg-aha-red/[0.04] px-3.5 py-2.5 text-[11.5px] leading-relaxed text-foreground/80">
                     <b>Simülasyon sonucudur.</b> Meslektaşlarımızın dosya hazırlığına yardımcı olmak için sunulan bir ön değerlendirmedir; hukuki görüş, bilirkişi raporu veya kusur tespiti niteliği taşımaz. Gerçek kusur değerlendirmesi somut olayın tüm delilleriyle bilirkişiler ve yargı mercilerince yapılır.
                 </p>

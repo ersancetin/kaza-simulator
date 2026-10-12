@@ -53,6 +53,8 @@ export interface Ihlal {
     ad: string;
     puan: number;
     dayanak: string;
+    /** KTK m.84'te sayılan asli kusur hâlinin bendi (varsa), ör. 'a', 'b–c' */
+    madde84?: string;
 }
 
 export type YolSinifi =
@@ -298,6 +300,7 @@ export interface KusurGerekce {
     ad: string;
     dayanak: string;
     puan: number;
+    madde84?: string;
 }
 
 export type KusurSinifi = 'kusursuz' | 'asli' | 'tali';
@@ -313,6 +316,8 @@ export interface KusurTaraf {
 
 export interface KusurSonuc {
     belirsiz: boolean;
+    /** Her iki tarafta da m.84 hâli varsa: oranın yönetmelik esaslarına göre belirlenmesi notu */
+    coklu84: boolean;
     A: KusurTaraf;
     B: KusurTaraf;
 }

@@ -14,9 +14,9 @@ export function hizAsimiPuani(hizKmh: number | null, limitKmh: number | null): K
     const oran = hizKmh / limitKmh;
     const yuzde = Math.round((oran - 1) * 100);
     if (oran <= 1.1) return null;
-    if (oran <= 1.3) return { ad: `Hız sınırının aşılmış olması (%${yuzde})`, puan: 35, dayanak: 'KTK m.51 ile ilgili olabilir — tali kusur ağırlığında değerlendirilebilir' };
-    if (oran <= 1.5) return { ad: `Hız sınırının ciddi aşılmış olması (%${yuzde})`, puan: 65, dayanak: 'KTK m.51 ile ilgili olabilir' };
-    return { ad: `Hız sınırının ağır aşılmış olması (%${yuzde})`, puan: 100, dayanak: 'KTK m.51 ile ilgili olabilir — asli kusur ağırlığında değerlendirilebilir' };
+    if (oran <= 1.3) return { ad: `Hız sınırının aşılmış olması (%${yuzde})`, puan: 35, dayanak: 'KTK m.51/1 (hız sınırlarına uyma) ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir' };
+    if (oran <= 1.5) return { ad: `Hız sınırının ciddi aşılmış olması (%${yuzde})`, puan: 65, dayanak: 'KTK m.51/1 ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir' };
+    return { ad: `Hız sınırının ağır aşılmış olması (%${yuzde})`, puan: 100, dayanak: 'KTK m.51/1 ve m.52/1-b ile ilgili olabilir; m.84 hâlleri arasında değildir, ağır aşım yüksek ağırlıkla hesaba katılmıştır' };
 }
 
 function tarafPuani(g: KusurGirdi): { toplam: number; gerekceler: KusurGerekce[] } {
@@ -26,7 +26,7 @@ function tarafPuani(g: KusurGirdi): { toplam: number; gerekceler: KusurGerekce[]
         const k = TUM_IHLALLER.find((i) => i.id === id);
         if (!k) continue;
         toplam += k.puan;
-        gerekceler.push({ ad: k.ad, dayanak: k.dayanak, puan: k.puan });
+        gerekceler.push({ ad: k.ad, dayanak: k.dayanak, puan: k.puan, madde84: k.madde84 });
     }
     const hiz = hizAsimiPuani(g.hizKmh, g.limitKmh);
     if (hiz) {
@@ -77,5 +77,8 @@ export function kusurHesapla(a: KusurGirdi, b: KusurGirdi): KusurSonuc {
             gerekceler,
         };
     };
-    return { belirsiz, A: taraf(sekizA, A.gerekceler), B: taraf(sekizB, B.gerekceler) };
+    // KTK m.84 son cümlesi: sayılan hâllerden biri birden fazla sürücü tarafından yapılmışsa
+    // kusur oranı yönetmelikte belirtilen esaslara göre belirlenir.
+    const coklu84 = A.gerekceler.some((g) => g.madde84) && B.gerekceler.some((g) => g.madde84);
+    return { belirsiz, coklu84, A: taraf(sekizA, A.gerekceler), B: taraf(sekizB, B.gerekceler) };
 }

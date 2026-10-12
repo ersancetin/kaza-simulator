@@ -94,6 +94,32 @@ olabilecek KTK hükümleri esas alınarak 8'lik dilimde bir **olası dağılım*
 olabilir (KTK m.x ile ilgili olabilir)" diliyle yazılır. Madde atıfları örneklendirme amaçlıdır; güncel ve
 bağlayıcı metin için mevzuat.gov.tr'ye başvurulmalıdır.
 
+### KTK eşleştirme tablosu
+
+Atıflar 2918 sayılı KTK'nın resmî metniyle (mevzuat.gov.tr, 19.08.2026 tarihli doğrulanmış derleme)
+karşılaştırılmıştır. m.84 yalnızca **araç sürücüleri** için asli kusur sayılan hâlleri sayar; maddenin son
+cümlesine göre bu hâllerden biri birden fazla sürücü tarafından yapılmışsa oran yönetmelik esaslarına göre
+belirlenir (uygulama bu durumda ayrıca uyarı gösterir).
+
+| İhlal (kullanıcı beyanı) | İlgili olabilecek hüküm | m.84 |
+|---|---|---|
+| Kırmızı ışıkta / yetkili memurun dur işaretinde geçme | m.47/1-b | a |
+| Taşıt giremez yola / karşı yönün şeridine girme | m.46/1-a | b–c (iki şeritli yolda g) |
+| Arkadan çarpma | m.56/1-c, m.52/1-c | d |
+| Geçme yasağı olan yerde geçme | m.54 | e |
+| Doğrultu değiştirme / dönüş manevrası | m.53, m.67 | f, j |
+| Şeride tecavüz / kurala aykırı şerit değiştirme | m.46/1-b, c; m.56/1-a | g |
+| Kavşakta geçiş önceliğine uymama | m.57 | h |
+| Dar kaplamada geçiş önceliğine uymama | m.56/1-b, e | i |
+| Yerleşim dışı taşıt yolunda park/duraklama, tedbirsizlik | m.59 | k |
+| Kurallara uygun park edilmiş araca çarpma | — | l |
+| Alkol / uyuşturucu etkisinde sürme | m.48 | — |
+| Yaya/okul geçidinde ilk geçiş hakkı vermeme | m.74, m.52/1-a | — |
+| Hızı şartlara uydurmama | m.52/1-a, b | — |
+| Seyir hâlinde telefon / dikkatsiz sürüş | m.73/1 | — |
+| Hız sınırını aşma (otomatik) | m.51/1, m.52/1-b | — |
+| Yaya: ışığa uymama · geçit dışından geçme · taşıt yolunda yürüme · kontrolsüz geçme | m.68/1-b-1 & m.47/1-b · m.68/1-b · m.68/1-a · m.68/1-b, c | — |
+
 ## Yasal uyarı
 
 Kaza Simülatörü, Cumhuriyet Avukatları tarafından meslektaşlarımızın faydasına, trafik kazası dosyalarında

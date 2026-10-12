@@ -138,6 +138,7 @@ export function KazaCard({ id, k, liste, mu, guncelle }: KazaCardProps) {
                             <Onay key={i.id} secili={k.ihlaller.includes(i.id)}
                                 degisti={(v) => guncelle({ ihlaller: v ? [...k.ihlaller, i.id] : k.ihlaller.filter((x) => x !== i.id) })}>
                                 {i.ad}
+                                {i.madde84 && <Rozet renk="kirmizi" className="ml-1.5 align-middle">m.84/{i.madde84}</Rozet>}
                                 <span className="block text-[11px] text-muted-foreground">{i.dayanak}</span>
                             </Onay>
                         ))}

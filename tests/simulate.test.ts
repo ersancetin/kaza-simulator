@@ -90,3 +90,21 @@ test('senaryo bağlantısı gidiş-dönüş ve doğrulama', async () => {
     assert.equal(kotu.katilimcilar.A.tur, 'otomobil');
     assert.equal(await baglantiCoz('zbozuk!!'), null);
 });
+
+import { IHLALLER, YAYA_IHLALLERI } from '../src/kaza-simulator/data/kazaData.ts';
+
+test('KTK atıfları: olasılık dili ve m.84 bentleri', () => {
+    for (const i of [...IHLALLER, ...YAYA_IHLALLERI]) {
+        assert.match(i.dayanak, /ilgili olabilir|değerlendirilebilir/, i.id);
+        assert.doesNotMatch(i.dayanak, /asli kusur sayılan hâl'?$/, i.id);
+    }
+    // m.84 bentleri a–l: her bent en az bir ihlale eşlenmiş olmalı
+    const bentler = IHLALLER.map((i) => i.madde84 ?? '').join(' ');
+    for (const b of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']) assert.ok(new RegExp(`(^|[^a-z])${b}([^a-z]|$)`).test(bentler), `m.84/${b}`);
+    // Alkol ve yaya geçidi m.84'te sayılmaz
+    assert.equal(IHLALLER.find((i) => i.id === 'alkol')?.madde84, undefined);
+    assert.equal(IHLALLER.find((i) => i.id === 'yaya-gecidi')?.madde84, undefined);
+    const k = kusurHesapla({ ihlaller: ['kirmizi-isik'], hizKmh: 50, limitKmh: 50 }, { ihlaller: ['arkadan-carpma'], hizKmh: 50, limitKmh: 50 });
+    assert.equal(k.coklu84, true);
+    assert.equal(k.A.etiket.ad, 'Eşit kusur ihtimali');
+});
