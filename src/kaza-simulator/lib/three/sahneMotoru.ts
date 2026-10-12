@@ -6,16 +6,17 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { ARAC_TURLERI, TARAF_RENK } from '../../data/kazaData.ts';
-import type { Cevre, IzSerisi, KameraModu, KatilimciTipi, AracTuruId, SimSonuc, TarafId, Vec2 } from '../../types/kazaTypes.ts';
+import type { Aydinlatma, AracTuruId, Cevre, Hava, IsikDurumu, IsikRengi, IzSerisi, KameraModu, KatilimciTipi, SimSonuc, TarafId, Vec2 } from '../../types/kazaTypes.ts';
 import { KANAL_SAYISI } from '../../types/kazaTypes.ts';
 import { hudCiz, logoGorseli, logoYukle, type HudMetin } from '../hud.ts';
 import { KISA_UYARI, MARKA } from '../../data/kazaData.ts';
 import { videoDestekleniyor, videoTuru, type VideoSecenek, type VideoSonuc } from '../video.ts';
 import { kareOku } from '../simulate.ts';
-import { Rota } from '../geometry.ts';
+import { Rota, uzaklik } from '../geometry.ts';
 import { isaretleriKur, serbestBirak, seritGeometri, statikCevreKur } from './cevreKur.ts';
 import { dokular, etiketDokusu } from './dokular.ts';
-import { aracOlustur, yayaAnimasyonu, yayaOlustur, type YayaModeli } from './modeller.ts';
+import { aracOlustur, modelGeceModu, yayaAnimasyonu, yayaOlustur, type YayaModeli } from './modeller.ts';
+import { isikAkisDurumu, isikRengi, type IsikTarafBilgisi } from '../isik.ts';
 
 export interface TarafGorunum {
     tip: KatilimciTipi;
@@ -48,6 +49,16 @@ export class SahneMotoru {
     private readonly kamera: THREE.PerspectiveCamera;
     private readonly kontrol: OrbitControls;
     private readonly gunes: THREE.DirectionalLight;
+    private readonly hemi: THREE.HemisphereLight;
+    private readonly zeminMat: THREE.MeshStandardMaterial;
+    private readonly gokDokulari = new Map<string, THREE.CanvasTexture>();
+    private aydinlatma: Aydinlatma = 'gunduz';
+    private hava: Hava = 'acik';
+    private yagis: THREE.Points | THREE.LineSegments | null = null;
+    private yagisHizi = 0;
+    private farlar: THREE.SpotLight[] = [];
+    private isikBilgi: Record<TarafId, IsikTarafBilgisi> = { A: { yon: null, durum: 'yok' }, B: { yon: null, durum: 'yok' } };
+    private isikDirekleri: Array<{ lambalar: THREE.MeshBasicMaterial[]; durum: IsikDurumu }> = [];
     private readonly gozlemci: ResizeObserver;
     private readonly isin = new THREE.Raycaster();
     private readonly zeminDuzlem = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -125,7 +136,8 @@ export class SahneMotoru {
         this.kontrol.maxDistance = 900;
         this.kontrol.addEventListener('change', this.kirlet);
 
-        this.sahne.add(new THREE.HemisphereLight(0xe3eeff, 0x6f7d5c, 0.75));
+        this.hemi = new THREE.HemisphereLight(0xe3eeff, 0x6f7d5c, 0.75);
+        this.sahne.add(this.hemi);
         this.gunes = new THREE.DirectionalLight(0xfff1dc, 2.4);
         this.gunes.position.set(60, 110, 40);
         this.gunes.castShadow = true;
@@ -139,10 +151,8 @@ export class SahneMotoru {
         const cim = d.cim.clone();
         cim.repeat.set(700, 700);
         cim.needsUpdate = true;
-        const zemin = new THREE.Mesh(
-            new THREE.PlaneGeometry(5600, 5600).rotateX(-Math.PI / 2),
-            new THREE.MeshStandardMaterial({ color: 0xc9d2b8, map: cim, roughness: 1 }),
-        );
+        this.zeminMat = new THREE.MeshStandardMaterial({ color: 0xc9d2b8, map: cim, roughness: 1 });
+        const zemin = new THREE.Mesh(new THREE.PlaneGeometry(5600, 5600).rotateX(-Math.PI / 2), this.zeminMat);
         zemin.receiveShadow = true;
         this.sahne.add(zemin);
         this.sahne.add(this.dinamik, this.onizleme);
@@ -266,6 +276,7 @@ export class SahneMotoru {
         this.statik = statikCevreKur(cevre, merkez);
         this.sahne.add(this.statik);
         this.isaretleriYenile();
+        this.ortamUygula(this.aydinlatma, this.hava);
         this.kirli = true;
     }
 
@@ -278,13 +289,217 @@ export class SahneMotoru {
         }
         this.isaretGrup = isaretleriKur(this.cevre, this.P);
         this.sahne.add(this.isaretGrup);
+        this.isikDirekleriTara();
+        this.kirli = true;
+    }
+
+    // ================= Trafik ışıkları =================
+    /** Taraf başına çarpışma anı ışık durumu ve (hesaplama öncesi) geliş yönleri */
+    isikAyarla(bilgi: Record<TarafId, IsikTarafBilgisi>): void {
+        this.isikBilgi = bilgi;
+        this.isikDirekleriTara();
+    }
+
+    private isikDirekleriTara(): void {
+        this.isikDirekleri = [];
+        if (!this.isaretGrup) return;
+        const s = this.sonuc;
+        // Hesaplama varsa yönler çarpışma anı karelerinden alınır
+        const bilgi: Record<TarafId, IsikTarafBilgisi> = { ...this.isikBilgi };
+        if (s) {
+            const k = Math.round(s.tCarpisma * s.fps) * KANAL_SAYISI + 2;
+            for (const id of ['A', 'B'] as const) {
+                const psi = s.taraflar[id].kareler[k];
+                bilgi[id] = { durum: this.isikBilgi[id].durum, yon: { x: Math.sin(psi), z: Math.cos(psi) } };
+            }
+        }
+        for (const o of this.isaretGrup.children) {
+            const lambalar = o.userData.lambalar as THREE.MeshBasicMaterial[] | undefined;
+            if (!lambalar) continue;
+            if (uzaklik({ x: o.position.x, z: o.position.z }, this.P) > 60) {
+                this.isikDirekleri.push({ lambalar, durum: 'yok' });
+                continue;
+            }
+            const yuz = { x: Math.sin(o.rotation.y), z: Math.cos(o.rotation.y) };
+            this.isikDirekleri.push({ lambalar, durum: isikAkisDurumu(yuz, bilgi) });
+        }
+        this.isiklariBoya();
+    }
+
+    private isiklariBoya(): void {
+        const s = this.sonuc;
+        for (const d of this.isikDirekleri) {
+            // Hesaplama yoksa çarpışma anındaki renk gösterilir
+            const renk = s ? isikRengi(d.durum, this.t, s.tCarpisma) : isikRengi(d.durum, 1, 1);
+            const sira: Array<IsikRengi> = ['kirmizi', 'sari', 'yesil'];
+            d.lambalar.forEach((m, i) => {
+                const parlaklik = renk === null ? 0.45 : renk === sira[i] ? 1.6 : 0.12;
+                m.color.set(m.userData.renk as number).multiplyScalar(parlaklik);
+            });
+        }
+        this.kirli = true;
+    }
+
+    // ================= Aydınlatma ve hava =================
+    private gokDokusu(anahtar: string, renkler: [string, string, string]): THREE.CanvasTexture {
+        const var_ = this.gokDokulari.get(anahtar);
+        if (var_) return var_;
+        const c = document.createElement('canvas');
+        c.width = 4;
+        c.height = 512;
+        const x = c.getContext('2d');
+        if (x) {
+            const g = x.createLinearGradient(0, 0, 0, 512);
+            g.addColorStop(0, renkler[0]);
+            g.addColorStop(0.55, renkler[1]);
+            g.addColorStop(1, renkler[2]);
+            x.fillStyle = g;
+            x.fillRect(0, 0, 4, 512);
+        }
+        const t = new THREE.CanvasTexture(c);
+        t.colorSpace = THREE.SRGBColorSpace;
+        this.gokDokulari.set(anahtar, t);
+        return t;
+    }
+
+    /** Gündüz/akşam/gece ve açık/yağmur/sis/kar görünümünü uygular */
+    ortamAyarla(aydinlatma: Aydinlatma, hava: Hava): void {
+        this.aydinlatma = aydinlatma;
+        this.hava = hava;
+        this.ortamUygula(aydinlatma, hava);
+    }
+
+    private ortamUygula(aydinlatma: Aydinlatma, hava: Hava): void {
+        const gece = aydinlatma === 'gece';
+        const aksam = aydinlatma === 'aksam';
+        const kapali = hava !== 'acik';
+        // Gökyüzü
+        let sisRengi: number;
+        if (gece) {
+            this.sahne.background = this.gokDokusu('gece', ['#050a18', '#111d38', '#26334f']);
+            sisRengi = 0x141d33;
+        } else if (aksam) {
+            this.sahne.background = kapali ? this.gokDokusu('aksam-kapali', ['#4a4f63', '#9a8c8a', '#c7b8ad']) : this.gokDokusu('aksam', ['#33457a', '#e48f68', '#f7d09d']);
+            sisRengi = kapali ? 0xa59a98 : 0xe9b993;
+        } else {
+            this.sahne.background = kapali ? this.gokDokusu('kapali', ['#8a95a1', '#b7c0c8', '#d6dbe0']) : dokular().gokyuzu;
+            sisRengi = kapali ? 0xc9d0d6 : 0xdce7ef;
+        }
+        if (hava === 'sis') this.sahne.background = new THREE.Color(sisRengi);
+        const [yakin, uzak] = hava === 'sis' ? [8, 95] : hava === 'yagmur' ? [50, 420] : hava === 'kar' ? [40, 320] : gece ? [120, 900] : [380, 1500];
+        this.sahne.fog = new THREE.Fog(sisRengi, yakin, uzak);
+
+        // Işıklar
+        const zayiflama = kapali ? 0.45 : 1;
+        if (gece) {
+            this.hemi.color.set(0x7d8fc2);
+            this.hemi.groundColor.set(0x1a1f2a);
+            this.hemi.intensity = 0.22;
+            this.gunes.color.set(0xa9bbff);
+            this.gunes.intensity = 0.25;
+            this.sahne.environmentIntensity = 0.1;
+        } else if (aksam) {
+            this.hemi.color.set(0xffd9b8);
+            this.hemi.groundColor.set(0x5a4a3c);
+            this.hemi.intensity = 0.5;
+            this.gunes.color.set(0xffb27a);
+            this.gunes.intensity = 1.5 * zayiflama;
+            this.sahne.environmentIntensity = 0.35;
+        } else {
+            this.hemi.color.set(0xe3eeff);
+            this.hemi.groundColor.set(0x6f7d5c);
+            this.hemi.intensity = kapali ? 0.95 : 0.75;
+            this.gunes.color.set(0xfff1dc);
+            this.gunes.intensity = 2.4 * zayiflama;
+            this.sahne.environmentIntensity = 0.55;
+        }
+        const yukseklik = aksam ? 28 : 110;
+        this.gunes.position.set(this.P.x + 90, yukseklik, this.P.z + 30);
+        this.cizici.toneMappingExposure = gece ? 1.25 : 1.05;
+
+        // Zemin ve asfalt
+        this.zeminMat.color.set(hava === 'kar' ? 0xf4f6f8 : 0xc9d2b8);
+        this.statik?.traverse((o) => {
+            const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+            if (!m || Array.isArray(m)) return;
+            if (m.name === 'asfalt') {
+                m.roughness = hava === 'yagmur' ? 0.32 : 0.95;
+                m.metalness = hava === 'yagmur' ? 0.15 : 0;
+                m.color.set(hava === 'yagmur' ? 0xb4b8bd : hava === 'kar' ? 0xdfe3e7 : 0xffffff);
+            } else if (m.name === 'lamba-basi') {
+                m.emissiveIntensity = gece ? 3 : aksam ? 1.2 : 0.35;
+            }
+            if (o.name === 'isik-havuzu') o.visible = gece || aksam;
+        });
+        modelGeceModu(gece || aksam);
+        for (const f of this.farlar) {
+            f.visible = gece || aksam || hava === 'sis';
+            f.intensity = gece ? 900 : 350;
+        }
+        this.yagisKur(hava);
+        this.kirli = true;
+    }
+
+    private yagisKur(hava: Hava): void {
+        if (this.yagis) {
+            this.sahne.remove(this.yagis);
+            this.yagis.geometry.dispose();
+            (this.yagis.material as THREE.Material).dispose();
+            this.yagis = null;
+        }
+        if (hava !== 'yagmur' && hava !== 'kar') return;
+        const kar = hava === 'kar';
+        const n = kar ? 2500 : 3500;
+        const R = 60;
+        const H = 40;
+        const p = new Float32Array(n * (kar ? 3 : 6));
+        for (let i = 0; i < n; i++) {
+            const x = (Math.random() - 0.5) * 2 * R;
+            const y = Math.random() * H;
+            const z = (Math.random() - 0.5) * 2 * R;
+            if (kar) p.set([x, y, z], i * 3);
+            else p.set([x, y, z, x + 0.05, y + 0.7, z + 0.02], i * 6);
+        }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+        this.yagis = kar
+            ? new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 0.16, transparent: true, opacity: 0.9, depthWrite: false }))
+            : new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xc4ccd6, transparent: true, opacity: 0.45, depthWrite: false }));
+        this.yagis.frustumCulled = false;
+        this.yagis.userData = { R, H };
+        this.yagisHizi = kar ? 1.4 : 14;
+        this.sahne.add(this.yagis);
+    }
+
+    /** Yağış parçacıklarını kameranın baktığı bölgede, gerçek zamanla düşürür */
+    private yagisGuncelle(dt: number): void {
+        const y = this.yagis;
+        if (!y) return;
+        const { R, H } = y.userData as { R: number; H: number };
+        const a = y.geometry.attributes.position as THREE.BufferAttribute;
+        const dizi = a.array as Float32Array;
+        const adim = y instanceof THREE.Points ? 3 : 6;
+        const dus = this.yagisHizi * dt;
+        const zaman = performance.now() / 1000;
+        for (let i = 0; i < dizi.length; i += adim) {
+            dizi[i + 1] -= dus;
+            if (adim === 6) dizi[i + 4] -= dus;
+            else dizi[i] += Math.sin(zaman + i) * 0.01;
+            if (dizi[i + 1] < 0) {
+                dizi[i + 1] += H;
+                if (adim === 6) dizi[i + 4] += H;
+            }
+        }
+        a.needsUpdate = true;
+        y.position.set(this.kontrol.target.x, 0, this.kontrol.target.z);
+        void R;
         this.kirli = true;
     }
 
     kazaNoktasiAyarla(P: Vec2, kameraOdakla = true): void {
         this.P = { ...P };
         this.isaretci.position.set(P.x, 0, P.z);
-        this.gunes.position.set(P.x + 60, 110, P.z + 40);
+        this.gunes.position.set(P.x + 90, this.aydinlatma === 'aksam' ? 28 : 110, P.z + 30);
         this.gunes.target.position.set(P.x, 0, P.z);
         if (kameraOdakla) {
             const fark = new THREE.Vector3().subVectors(this.kamera.position, this.kontrol.target);
@@ -468,6 +683,22 @@ export class SahneMotoru {
         this.dinamik.add(this.guzergahlar);
 
         this.enkazKur(sonuc);
+
+        // Farlar: akşam/gece ve siste yol üzerine ışık konisi
+        this.farlar = [];
+        for (const id of ['A', 'B'] as const) {
+            const g = gorunum[id];
+            const n = this.taraflar[id];
+            if (!n || g.tip === 'yaya') continue;
+            const T = ARAC_TURLERI[g.tur];
+            const far = new THREE.SpotLight(0xfff1d6, 900, 70, 0.55, 0.65, 1.6);
+            far.position.set(0, 0.8, T.boy / 2);
+            far.target.position.set(0, 0, T.boy / 2 + 18);
+            n.kok.add(far, far.target);
+            this.farlar.push(far);
+        }
+        this.isikDirekleriTara();
+        this.ortamUygula(this.aydinlatma, this.hava);
         const parlamaDoku = this.parlamaDokusu();
         this.parlama = new THREE.Sprite(new THREE.SpriteMaterial({ map: parlamaDoku, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
         this.parlama.position.set(sonuc.P.x, 1.0, sonuc.P.z);
@@ -692,6 +923,7 @@ export class SahneMotoru {
             iz.mesh.geometry.setDrawRange(0, Math.max(0, adet - 1) * 6);
         }
         const tau = this.t - s.tCarpisma;
+        if (this.isikDirekleri.length) this.isiklariBoya();
         this.enkazGuncelle(tau);
         if (this.parlama) {
             const gorunur = tau >= -0.02 && tau < 0.32;
@@ -808,6 +1040,7 @@ export class SahneMotoru {
         const simdi = performance.now();
         const dt = Math.min(0.05, (simdi - this.sonAn) / 1000);
         this.sonAn = simdi;
+        this.yagisGuncelle(dt);
         if (this.kayit) {
             this.kayit.kare(dt);
             return;
@@ -908,7 +1141,9 @@ export class SahneMotoru {
         etiketler.forEach((e) => (e.visible = false));
         const isaretciGorunur = this.isaretci.visible;
         this.isaretci.visible = false;
-        const sis = this.sahne.fog;
+        // Kroki her zaman gündüz ışığında, yağışsız ve sissiz çizilir
+        const oncekiOrtam: [Aydinlatma, Hava] = [this.aydinlatma, this.hava];
+        this.ortamUygula('gunduz', 'acik');
         this.sahne.fog = null;
         const oncekiOran = this.cizici.getPixelRatio();
         const w = this.kap.clientWidth || 1;
@@ -929,7 +1164,7 @@ export class SahneMotoru {
         // Geri yükle
         this.cizici.setPixelRatio(oncekiOran);
         this.cizici.setSize(w, h, false);
-        this.sahne.fog = sis;
+        this.ortamUygula(oncekiOrtam[0], oncekiOrtam[1]);
         this.isaretci.visible = isaretciGorunur;
         etiketler.forEach((e) => (e.visible = true));
         if (s) this.zamanAyarla(oncekiT);

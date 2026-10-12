@@ -163,7 +163,17 @@ export type CarpismaTipi = 'otomatik' | 'yandan' | 'kafa-kafaya' | 'arkadan' | '
 export type CozulmusCarpismaTipi = Exclude<CarpismaTipi, 'otomatik'> | 'yaya';
 export type CarpmaBolgesi = 'on' | 'orta' | 'arka';
 
+export type IsikDurumu = 'yok' | 'yesil' | 'sari' | 'kirmizi';
+export type Aydinlatma = 'gunduz' | 'aksam' | 'gece';
+export type Hava = 'acik' | 'yagmur' | 'sis' | 'kar';
+/** Trafik ışığının bir andaki rengi (yanan lamba) */
+export type IsikRengi = 'kirmizi' | 'sari' | 'yesil';
+
 export interface GenelKosullar {
+    /** Her tarafın karşısındaki ışığın çarpışma anındaki rengi */
+    isik: Record<TarafId, IsikDurumu>;
+    aydinlatma: Aydinlatma;
+    hava: Hava;
     yuzeyId: string;
     mu: number;
     limitKmh: number;

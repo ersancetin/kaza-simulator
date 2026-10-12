@@ -29,6 +29,11 @@ const MALZEME = {
     levhaArka: new THREE.MeshStandardMaterial({ color: 0x8e949b, roughness: 0.5, metalness: 0.7 }),
 };
 
+/** Akşam/gece: farlar ve stoplar daha parlak yanar */
+export function modelGeceModu(gece: boolean): void {
+    MALZEME.far.emissiveIntensity = gece ? 4 : 1.4;
+}
+
 function govdeMalzemesi(renk: string | number): THREE.MeshStandardMaterial {
     // Ortam yansımasıyla metalik boya görünümü; clearcoat'lu fiziksel malzemeden çok daha hızlı derlenir
     return new THREE.MeshStandardMaterial({ color: renk, roughness: 0.28, metalness: 0.55, envMapIntensity: 1.25 });
@@ -79,26 +84,94 @@ function kenarZ(cokgen: Nokta2[], y: number, yon: 1 | -1): number {
     return Number.isFinite(sonuc) ? sonuc : 0;
 }
 
+const tekerGeoOnbellek = new Map<string, { lastik: THREE.LatheGeometry; jant: THREE.LatheGeometry; disk: THREE.CylinderGeometry; kol: THREE.BoxGeometry }>();
+
+/** Yuvarlak omuzlu lastik + çok kollu alüminyum jant (Lathe profilleri) */
 function teker(r: number, genislik: number): THREE.Group {
+    const anahtar = `${r.toFixed(3)}-${genislik.toFixed(3)}`;
+    let geo = tekerGeoOnbellek.get(anahtar);
+    if (!geo) {
+        const w = genislik / 2;
+        const ic = r * 0.66;
+        // Lastik kesiti (yarıçap, eksen): iç omuz → sırt → dış omuz
+        const lastikP: THREE.Vector2[] = [];
+        lastikP.push(new THREE.Vector2(ic, -w * 0.92));
+        for (let i = 0; i <= 10; i++) {
+            const a = -Math.PI / 2 + (i / 10) * Math.PI;
+            const yuvarlak = Math.min(w * 0.55, r * 0.18);
+            const yx = r - yuvarlak + Math.cos(a) * yuvarlak;
+            const yy = Math.sin(a) * (w - yuvarlak * 0.2);
+            lastikP.push(new THREE.Vector2(yx, yy));
+        }
+        lastikP.push(new THREE.Vector2(ic, w * 0.92));
+        const lastik = new THREE.LatheGeometry(lastikP, 28);
+        lastik.rotateZ(Math.PI / 2);
+        // Jant: dışa doğru hafif çanak
+        const jantP = [
+            new THREE.Vector2(0.001, w * 0.55), new THREE.Vector2(r * 0.12, w * 0.6), new THREE.Vector2(r * 0.55, w * 0.78),
+            new THREE.Vector2(ic, w * 0.9), new THREE.Vector2(ic + 0.004, w * 0.2), new THREE.Vector2(ic + 0.004, -w * 0.8),
+        ];
+        const jant = new THREE.LatheGeometry(jantP, 24);
+        jant.rotateZ(Math.PI / 2);
+        const disk = new THREE.CylinderGeometry(r * 0.5, r * 0.5, 0.03, 20);
+        disk.rotateZ(Math.PI / 2);
+        const kol = new THREE.BoxGeometry(0.02, ic * 0.95, r * 0.11);
+        geo = { lastik, jant, disk, kol };
+        tekerGeoOnbellek.set(anahtar, geo);
+    }
     const g = new THREE.Group();
-    const lastik = new THREE.Mesh(new THREE.CylinderGeometry(r, r, genislik, 22), MALZEME.lastik);
-    lastik.rotation.z = Math.PI / 2;
+    const lastik = new THREE.Mesh(geo.lastik, MALZEME.lastik);
     lastik.castShadow = true;
     g.add(lastik);
-    const jant = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r * 0.6, genislik + 0.015, 14), MALZEME.jant);
-    jant.rotation.z = Math.PI / 2;
-    g.add(jant);
-    const gobek = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.16, r * 0.16, genislik + 0.03, 8), MALZEME.plastik);
-    gobek.rotation.z = Math.PI / 2;
-    g.add(gobek);
-    // Jant kolları: dönüş gözle görülsün
-    for (let i = 0; i < 5; i++) {
-        const kol = new THREE.Mesh(new THREE.BoxGeometry(genislik + 0.02, r * 0.95, r * 0.09), MALZEME.plastik);
-        kol.rotation.x = (i * Math.PI) / 5;
-        g.add(kol);
+    // Jantın iç yüzü koyu (derinlik hissi), dış çanak metalik
+    const icYuz = new THREE.Mesh(geo.disk, MALZEME.plastik);
+    icYuz.position.x = -genislik * 0.1;
+    g.add(icYuz);
+    for (const yon of [-1, 1]) {
+        const jant = new THREE.Mesh(geo.jant, MALZEME.jant);
+        jant.scale.x = yon;
+        g.add(jant);
+        // Kollar her iki yüzde: dönüş her taraftan görünür
+        for (let i = 0; i < 5; i++) {
+            const kol = new THREE.Mesh(geo.kol, MALZEME.jant);
+            kol.position.x = yon * genislik * 0.36;
+            kol.rotation.x = (i * Math.PI * 2) / 5;
+            kol.translateY(r * 0.3);
+            g.add(kol);
+        }
+        const gobek = new THREE.Mesh(geo.disk, MALZEME.krom);
+        gobek.scale.set(1, 0.28, 0.28);
+        gobek.position.x = yon * genislik * 0.4;
+        g.add(gobek);
     }
     g.userData.tekerR = r;
     return g;
+}
+
+/** (z, y) çokgen kenarlarını Chaikin ile yuvarlatır; uç noktalar korunur */
+function yuvarlat(n: Nokta2[], tekrar = 2): Nokta2[] {
+    let p = n;
+    for (let k = 0; k < tekrar; k++) {
+        const yeni: Nokta2[] = [p[0]];
+        for (let i = 0; i < p.length - 1; i++) {
+            const [z1, y1] = p[i];
+            const [z2, y2] = p[i + 1];
+            if (i > 0) yeni.push([z1 * 0.78 + z2 * 0.22, y1 * 0.78 + y2 * 0.22]);
+            if (i < p.length - 2) yeni.push([z1 * 0.22 + z2 * 0.78, y1 * 0.22 + y2 * 0.78]);
+        }
+        yeni.push(p[p.length - 1]);
+        p = yeni;
+    }
+    return p;
+}
+
+/** İki (z, y) noktası arasında, gövdenin bir yanında ince çubuk (direk, çizgi) */
+function cubuk(g: THREE.Group, a: Nokta2, b: Nokta2, x: number, kalinlik: number, derinlik: number, m: THREE.Material): void {
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(derinlik, l, kalinlik), m);
+    c.position.set(x, (a[1] + b[1]) / 2, (a[0] + b[0]) / 2);
+    c.rotation.x = Math.atan2(b[0] - a[0], b[1] - a[1]);
+    g.add(c);
 }
 
 function kutu(w: number, h: number, d: number, m: THREE.Material, x: number, y: number, z: number, golge = true): THREE.Mesh {
@@ -161,41 +234,73 @@ const BINEK: Record<'sedan' | 'suv' | 'pikap', BinekProfili> = {
 };
 
 function binekArac(g: THREE.Group, profil: 'sedan' | 'suv' | 'pikap', en: number, boy: number, govde: THREE.Material, plaka: string): void {
+    void boy;
     const P = BINEK[profil];
-    const altGeo = ekstrude(silhuet(P.alt, P.taban, P.akslar, P.r), en, 0.06);
+    const altYumusak = yuvarlat(P.alt, 2);
+    const altGeo = ekstrude(silhuet(altYumusak, P.taban, P.akslar, P.r), en, 0.09);
     const alt = new THREE.Mesh(altGeo, govde);
     alt.castShadow = true;
     alt.receiveShadow = true;
     g.add(alt);
-    const kabin = new THREE.Mesh(ekstrude(P.kabin, en - 0.16, 0.05), MALZEME.cam);
+    const kabinEn = en - 0.18;
+    const kabin = new THREE.Mesh(ekstrude(yuvarlat(P.kabin, 1), kabinEn, 0.06), MALZEME.cam);
     kabin.castShadow = true;
     g.add(kabin);
-    const tavan = new THREE.Mesh(ekstrude(P.tavan, en - 0.12, 0.03), govde);
+    const tavan = new THREE.Mesh(ekstrude(yuvarlat(P.tavan, 1), en - 0.12, 0.04), govde);
     tavan.castShadow = true;
     g.add(tavan);
-    if (profil === 'pikap') {
-        // Kasa içi (koyu) ve kasa kenarları
-        g.add(kutu(en - 0.22, 0.02, 1.95, MALZEME.plastik, 0, 1.14, -1.62, false));
+    if (profil === 'pikap') g.add(kutu(en - 0.22, 0.02, 1.95, MALZEME.plastik, 0, 1.14, -1.62, false));
+
+    // Direkler: A (ön cam kenarı), B (kapı arası), C (arka cam kenarı) — iki yanda siyah
+    const [k0, k1, k2, k3] = P.kabin;
+    const belY = Math.min(k0[1], k3[1]);
+    const bZ = (k1[0] + k2[0]) / 2 - (profil === 'pikap' ? 0.1 : 0.05);
+    for (const s of [-1, 1]) {
+        const x = s * (kabinEn / 2 - 0.01);
+        cubuk(g, k2, k3, x, 0.07, 0.05, MALZEME.plastik);
+        cubuk(g, k0, k1, x, 0.09, 0.05, MALZEME.plastik);
+        cubuk(g, [bZ, belY], [bZ, (k1[1] + k2[1]) / 2 - 0.02], x, 0.09, 0.05, MALZEME.plastik);
+        // Krom bel çizgisi
+        const bel = kutu(0.012, 0.022, k3[0] - k0[0] - 0.1, MALZEME.krom, s * (en / 2 - 0.035), belY + 0.005, (k0[0] + k3[0]) / 2, false);
+        g.add(bel);
+        // Kapı çizgileri ve kolları
+        const kapiAlt = P.taban + 0.12;
+        const kapilar = profil === 'pikap' ? [k3[0] - 0.05, bZ - 0.02] : [k3[0] - 0.08, bZ, k0[0] + 0.3];
+        for (const z of kapilar) g.add(kutu(0.006, belY - kapiAlt, 0.008, MALZEME.sasi, s * (en / 2 - 0.028), (belY + kapiAlt) / 2, z, false));
+        for (const z of profil === 'pikap' ? [bZ - 0.3] : [bZ - 0.3, k0[0] + 0.55]) g.add(kutu(0.02, 0.025, 0.13, MALZEME.krom, s * (en / 2 - 0.02), belY - 0.12, z, false));
+        // Siyah marşpiyel
+        g.add(kutu(0.04, 0.07, P.akslar[0] - P.akslar[1] - P.r * 2.4, MALZEME.plastik, s * (en / 2 - 0.04), P.taban + 0.05, (P.akslar[0] + P.akslar[1]) / 2, false));
     }
+
     const tamponY = P.taban + 0.1;
     const plakaY = P.taban + 0.27;
     const farY = P.alt[P.alt.length - 3][1] - 0.07;
     const stopY = P.alt[2][1] - 0.1;
-    const on = (y: number): number => kenarZ(P.alt, y, 1);
-    const arka = (y: number): number => kenarZ(P.alt, y, -1);
-    // Tamponlar, ızgara
-    g.add(kutu(en - 0.08, 0.17, 0.14, MALZEME.plastik, 0, tamponY, on(tamponY) - 0.04));
-    g.add(kutu(en - 0.08, 0.17, 0.14, MALZEME.plastik, 0, tamponY, arka(tamponY) + 0.04));
+    const on = (y: number): number => kenarZ(altYumusak, y, 1);
+    const arka = (y: number): number => kenarZ(altYumusak, y, -1);
+    // Tamponlar
+    g.add(kutu(en - 0.1, 0.17, 0.12, MALZEME.plastik, 0, tamponY, on(tamponY) - 0.035));
+    g.add(kutu(en - 0.1, 0.17, 0.12, MALZEME.plastik, 0, tamponY, arka(tamponY) + 0.035));
+    // Izgara: krom çerçeve + koyu petek
     const izgaraY = (farY + plakaY) / 2;
-    g.add(kutu(en * 0.42, 0.11, 0.04, MALZEME.plastik, 0, izgaraY, on(izgaraY) + 0.005, false));
-    // Aynalar
-    const aynaZ = P.kabin[P.kabin.length - 1][0] - 0.25;
-    for (const s of [-1, 1]) g.add(kutu(0.16, 0.1, 0.07, govde, s * (en / 2 + 0.06), P.kabin[0][1] + 0.08, aynaZ));
-    // Farlar ve stoplar gövde kenarına oturur
+    const izgaraZ = on(izgaraY);
+    g.add(kutu(en * 0.46, 0.15, 0.03, MALZEME.krom, 0, izgaraY, izgaraZ - 0.005, false));
+    g.add(kutu(en * 0.42, 0.11, 0.03, MALZEME.sasi, 0, izgaraY, izgaraZ + 0.004, false));
+    // Aynalar: gövde rengi kapak + siyah ayak
+    const aynaZ = k3[0] - 0.22;
     for (const s of [-1, 1]) {
-        g.add(kutu(0.36, 0.12, 0.06, MALZEME.far, s * (en / 2 - 0.27), farY, on(farY) - 0.015, false));
-        g.add(kutu(0.32, 0.12, 0.06, MALZEME.stop, s * (en / 2 - 0.24), stopY, arka(stopY) + 0.015, false));
+        g.add(kutu(0.18, 0.11, 0.09, govde, s * (en / 2 + 0.08), belY + 0.1, aynaZ));
+        g.add(kutu(0.1, 0.04, 0.05, MALZEME.plastik, s * (en / 2 + 0.01), belY + 0.06, aynaZ));
     }
+    // Farlar: koyu gövde + parlak lens + gündüz LED şeridi; arkada boydan boya stop şeridi
+    for (const s of [-1, 1]) {
+        const fz = on(farY);
+        g.add(kutu(0.42, 0.15, 0.05, MALZEME.sasi, s * (en / 2 - 0.29), farY, fz - 0.02, false));
+        g.add(kutu(0.3, 0.1, 0.05, MALZEME.far, s * (en / 2 - 0.31), farY + 0.005, fz - 0.005, false));
+        g.add(kutu(0.34, 0.018, 0.05, MALZEME.far, s * (en / 2 - 0.29), farY - 0.065, fz - 0.008, false));
+        g.add(kutu(0.34, 0.12, 0.05, MALZEME.stop, s * (en / 2 - 0.25), stopY, arka(stopY) + 0.012, false));
+    }
+    if (profil !== 'pikap') g.add(kutu(en - 0.6, 0.03, 0.04, MALZEME.stop, 0, stopY + 0.02, arka(stopY + 0.02) + 0.01, false));
     for (const z of P.akslar) {
         for (const s of [-1, 1]) {
             const t = teker(P.r, 0.24);
@@ -559,11 +664,13 @@ export function trafikIsigiOlustur(): THREE.Group {
     plaka.position.set(0, 3.3, -0.06);
     g.add(plaka);
     const renkler = [0xff2a2a, 0xffc21a, 0x1fd65f];
+    const lambalar: THREE.MeshBasicMaterial[] = [];
     renkler.forEach((r, i) => {
-        const lamba = new THREE.Mesh(
-            new THREE.CircleGeometry(0.1, 20),
-            new THREE.MeshStandardMaterial({ color: r, emissive: r, emissiveIntensity: 0.55, roughness: 0.3 }),
-        );
+        // Ton eşlemesiz: yanan lamba doygun renkte, sönük lamba koyu görünür
+        const mat = new THREE.MeshBasicMaterial({ color: r, toneMapped: false });
+        mat.userData.renk = r;
+        lambalar.push(mat);
+        const lamba = new THREE.Mesh(new THREE.CircleGeometry(0.1, 20), mat);
         lamba.position.set(0, 3.62 - i * 0.31, 0.215);
         g.add(lamba);
         const siper = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.16, 16, 1, true, -Math.PI / 2, Math.PI), govde);
@@ -571,6 +678,8 @@ export function trafikIsigiOlustur(): THREE.Group {
         siper.position.set(0, 3.64 - i * 0.31, 0.29);
         g.add(siper);
     });
+    // [kırmızı, sarı, yeşil] — sahne motoru evreye göre yakar
+    g.userData.lambalar = lambalar;
     return g;
 }
 

@@ -4,12 +4,15 @@
 
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Menu from '@radix-ui/react-dropdown-menu';
-import { Camera, Clapperboard, Download, FileImage, Image, Printer, X } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Camera, Clapperboard, Download, FileImage, FolderOpen, Image, Link2, Printer, Save, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { videoDestekleniyor, type VideoSecenek } from '../lib/video.ts';
 import { Alan, Buton, Segment } from './ui/temel.tsx';
 
 export interface DisaAktarMenusuProps {
+    senaryoKaydet: () => void;
+    baglantiKopyala: () => void;
+    senaryoAc: (f: File) => void;
     sonucVar: boolean;
     fotoIndir: (hudlu: boolean) => void;
     krokiIndir: () => void;
@@ -33,6 +36,7 @@ function Oge({ ikon, baslik, aciklama, onSelect, disabled }: { ikon: ReactNode; 
 
 export function DisaAktarMenusu(p: DisaAktarMenusuProps) {
     const [videoAcik, setVideoAcik] = useState(false);
+    const dosyaRef = useRef<HTMLInputElement>(null);
     const [cozunurluk, setCozunurluk] = useState<'720' | '1080'>('720');
     const [hiz, setHiz] = useState<'0.5' | '1'>('0.5');
     const [destek, setDestek] = useState(true);
@@ -51,10 +55,16 @@ export function DisaAktarMenusu(p: DisaAktarMenusuProps) {
                         <Oge ikon={<FileImage className="h-4 w-4" />} baslik="Kaza krokisi" aciklama="Ölçekli kuşbakışı, kuzey oku, A1/A2 konumları · PNG" onSelect={p.krokiIndir} />
                         <Oge ikon={<Clapperboard className="h-4 w-4" />} baslik="Video" aciklama={destek ? 'Canlandırmanın tamamı · MP4/WebM' : 'Bu tarayıcı video kaydını desteklemiyor'} disabled={!p.sonucVar || !destek} onSelect={() => setVideoAcik(true)} />
                         <Oge ikon={<Printer className="h-4 w-4" />} baslik="Rapor yazdır / PDF" aciklama="Kroki ve hesap özetiyle A4 rapor" disabled={!p.sonucVar} onSelect={p.yazdir} />
+                        <Menu.Separator className="mx-3 my-1.5 h-px bg-border/80" />
+                        <Oge ikon={<Save className="h-4 w-4" />} baslik="Senaryoyu kaydet" aciklama="Tüm girdiler ve sahne · .kaza.json dosyası" onSelect={p.senaryoKaydet} />
+                        <Oge ikon={<Link2 className="h-4 w-4" />} baslik="Paylaşım bağlantısını kopyala" aciklama="Meslektaşınız bağlantıyı açınca aynı sahneyi görür" onSelect={() => p.baglantiKopyala()} />
+                        <Oge ikon={<FolderOpen className="h-4 w-4" />} baslik="Senaryo dosyası aç" aciklama="Daha önce kaydedilen .kaza.json" onSelect={() => dosyaRef.current?.click()} />
                     </Menu.Content>
                 </Menu.Portal>
             </Menu.Root>
 
+            <input ref={dosyaRef} type="file" accept=".json,application/json" className="hidden" aria-hidden="true"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) p.senaryoAc(f); e.target.value = ''; }} />
             <Dialog.Root open={videoAcik} onOpenChange={setVideoAcik}>
                 <Dialog.Portal>
                     <Dialog.Overlay className="fixed inset-0 z-[2000] bg-foreground/30 backdrop-blur-[2px]" />
