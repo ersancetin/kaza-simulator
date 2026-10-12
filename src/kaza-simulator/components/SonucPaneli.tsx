@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { CARPISMA_TIP_ADI, MEVZUAT_KAYNAGI } from '../data/kazaData.ts';
 import { KTK_HUKUMLERI, hukumListesi } from '../data/ktkMetinleri.ts';
 import { HukumAlintisi } from './HukumAlintisi.tsx';
+import { SimulasyonUyarisi } from './Marka.tsx';
 import { siddetEtiketi } from '../lib/physics.ts';
 import { HizGrafigi } from './HizGrafigi.tsx';
 import type { KatilimciGirdi, KusurSonuc, SimSonuc, TarafId, TarafSonuc } from '../types/kazaTypes.ts';
@@ -29,7 +30,7 @@ function TarafBlogu({ s, ad }: { s: TarafSonuc; ad: string }) {
     const siddet = siddetEtiketi(s.deltaV);
     const k = s.kacinilabilirlik;
     return (
-        <Kart className="p-4">
+        <Kart className="p-3.5 md:p-4">
             <div className="mb-2 flex items-center gap-2.5">
                 <TarafNokta id={s.id} className="h-7 w-7" />
                 <div className="min-w-0 flex-1 truncate text-[13.5px] font-bold">{ad}</div>
@@ -87,7 +88,8 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
     const yuzde = (id: TarafId): number => kusur[id].yuzde;
     return (
         <div className="space-y-3">
-            <Kart className="p-4">
+            <SimulasyonUyarisi />
+            <Kart className="p-3.5 md:p-4">
                 <Baslik sag={<Rozet>{(sonuc.tCarpisma).toFixed(1)} sn’de temas</Rozet>}>Özet</Baslik>
                 <div className="text-[14px] font-semibold">{CARPISMA_TIP_ADI[sonuc.tip]}</div>
                 <div className="mt-1 text-[12.5px] text-muted-foreground">
@@ -104,7 +106,7 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
                 )}
             </Kart>
 
-            <Kart className="p-4">
+            <Kart className="p-3.5 md:p-4">
                 <Baslik sag={<span className="text-[11px] text-muted-foreground">Tıklayınca o ana sarar</span>}>Hız – zaman</Baslik>
                 <HizGrafigi sonuc={sonuc} t={t} tarafAdlari={tarafAdlari} zamanaGit={zamanaGit} />
             </Kart>
@@ -112,7 +114,7 @@ export function SonucPaneli({ sonuc, kusur, tarafAdlari, yazdir, krokiIndir, t, 
             <TarafBlogu s={sonuc.taraflar.A} ad={tarafAdlari.A} />
             <TarafBlogu s={sonuc.taraflar.B} ad={tarafAdlari.B} />
 
-            <Kart className="p-4">
+            <Kart className="p-3.5 md:p-4">
                 <Baslik sag={<Rozet renk="sari" className="shrink-0">Tespit değildir</Rozet>}>Olası kusur dağılımı</Baslik>
                 <div className="flex h-9 overflow-hidden rounded-full text-[12.5px] font-bold text-white">
                     <div className="flex min-w-14 items-center justify-center bg-taraf-a transition-all" style={{ flex: Math.max(yuzde('A'), 9) }}>A %{kusur.A.yuzdeMetin}</div>

@@ -3,7 +3,7 @@
 import { Car, ChevronRight, FolderOpen, HeartHandshake, Loader2, MapPin, PersonStanding, Route, Search, Waypoints, WifiOff, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { SABLONLAR } from '../data/kazaData.ts';
-import { Altbilgi, MarkaBasligi } from './Marka.tsx';
+import { Altbilgi, MarkaBasligi, SimulasyonUyarisi } from './Marka.tsx';
 import { SablonCizimi } from './SablonCizimi.tsx';
 import { adresAra } from '../lib/osm.ts';
 import type { SecilenKonum } from '../types/kazaTypes.ts';
@@ -66,23 +66,24 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc, 
         <div className="fixed inset-0 overflow-hidden bg-background">
             <HaritaSecici secilen={secilen} secildi={konumSec} hedef={hedef} zoomDegisti={setZoom} />
 
-            <aside className="pointer-events-none absolute inset-x-3 bottom-3 top-auto z-[1000] flex max-h-[62vh] flex-col md:inset-y-4 md:left-4 md:right-auto md:max-h-none md:w-[420px]">
+            <aside className="pointer-events-none absolute inset-x-3 bottom-3 top-auto z-[1000] flex max-h-[58dvh] flex-col md:inset-y-4 md:left-4 md:right-auto md:max-h-none md:w-[420px]">
                 <div className="pointer-events-auto flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-border/80 bg-white/95 shadow-xl backdrop-blur">
-                    <div className="border-b border-border/70 px-6 pb-5 pt-6">
+                    <div className="border-b border-border/70 px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-6">
                         <h1 className="sr-only">Cumhuriyet Avukatları — Kaza Simülatörü</h1>
                         <MarkaBasligi />
-                        <p className="mt-3 text-[12.5px] font-light leading-relaxed text-muted-foreground">
+                        <SimulasyonUyarisi tur="serit" className="mt-3 rounded-full sm:hidden" tikla={uyariAc} />
+                        <p className="mt-3 hidden text-[12.5px] font-light sm:block leading-relaxed text-muted-foreground">
                             Trafik kazasını gerçek yol üzerinde fizik tabanlı canlandırın; hız, kaçınılabilirlik ve olası kusur dağılımıni görün; kroki, fotoğraf ve video alın.
                         </p>
 
-                        <div className="relative mt-5">
+                        <div className="relative mt-3 sm:mt-5">
                             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <input
                                 value={sorgu}
                                 onChange={(e) => setSorgu(e.target.value)}
                                 placeholder="Türkiye'de adres arayın (ör. Kızılay, Ankara)"
                                 aria-label="Adres ara"
-                                className="w-full rounded-full border border-border bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-aha-red focus:ring-2 focus:ring-aha-red/20"
+                                className="w-full rounded-full border border-border bg-white py-2.5 pl-11 sm:py-3 pr-10 text-sm outline-none transition focus:border-aha-red focus:ring-2 focus:ring-aha-red/20"
                             />
                             {araniyor && <Loader2 className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
                             {!araniyor && sorgu && (
@@ -128,7 +129,7 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc, 
                                 </div>
                             </div>
                         ) : (
-                            <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
+                            <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground sm:mt-3 sm:text-[12.5px]">
                                 {zoom < 15
                                     ? 'Haritaya tıklayarak yakınlaşın, ardından kazanın olduğu yol üzerine tıklayın.'
                                     : 'Kazanın gerçekleştiği noktaya, yol üzerine tıklayın.'}
@@ -136,8 +137,8 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc, 
                         )}
                     </div>
 
-                    <div className="ince-kaydirma min-h-0 flex-1 overflow-y-auto px-6 py-5">
-                        <ol className="mb-5 grid grid-cols-3 gap-2">
+                    <div className="ince-kaydirma min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+                        <ol className="mb-5 hidden grid-cols-3 gap-2 sm:grid">
                             {[
                                 { no: 1, baslik: 'Konum', metin: 'Haritadan seçin veya hazır senaryo açın' },
                                 { no: 2, baslik: 'Taraflar', metin: 'Hız, fren izi, yön ve ihlalleri girin' },
@@ -195,7 +196,7 @@ export function BaslangicEkrani({ secilen, konumSec, kur, sablonYukle, uyariAc, 
                                 <HeartHandshake className="h-4 w-4" /> Meslektaşlarımızın faydasına
                             </div>
                             <p className="mt-1.5 text-[12px] leading-relaxed text-foreground/80">
-                                Bu uygulama bir <b>simülatördür</b>; <b>hukuki görüş, bilirkişi raporu veya delil</b> niteliği taşımaz.
+                                Bu uygulama bir <b>simülasyondur</b>; <b>hukuki görüş, bilirkişi raporu veya kusur tespiti değildir</b>, delil niteliği taşımaz.
                                 Dosya hazırlığında olayı görselleştirmek ve ön değerlendirme yapmak için ücretsiz sunulmuştur.
                             </p>
                             <button type="button" onClick={uyariAc} className="mt-2 text-[12px] font-semibold text-aha-red underline-offset-2 hover:underline">Yasal uyarının tamamını okuyun →</button>

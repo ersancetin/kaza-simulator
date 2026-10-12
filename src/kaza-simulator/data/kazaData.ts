@@ -20,7 +20,14 @@ export const MARKA = {
 } as const;
 
 /** Kısa uyarı: altbilgi, HUD, kroki */
-export const KISA_UYARI = 'Simülasyon aracıdır; hukuki görüş, bilirkişi raporu veya delil niteliği taşımaz.';
+export const KISA_UYARI = 'Simülasyondur; hukuki görüş, bilirkişi raporu veya kusur tespiti değildir, delil niteliği taşımaz.';
+
+/** Ana uyarı: tüm ekranlarda ve raporda aynı ifade */
+export const ANA_UYARI = {
+    baslik: 'Bu bir simülasyondur',
+    metin: 'Hukuki görüş, bilirkişi raporu veya kusur tespiti değildir; delil niteliği taşımaz.',
+    kisa: 'Simülasyondur · hukuki görüş ve bilirkişi raporu değildir',
+} as const;
 
 /** Uzun uyarı metni: ilk giriş penceresi, başlangıç ekranı ve rapor */
 export const YASAL_UYARI: readonly string[] = [

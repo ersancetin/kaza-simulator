@@ -73,7 +73,8 @@ input[type="range"].zaman:focus-visible { box-shadow: 0 0 0 4px oklch(0.502 0.19
     @page {
         size: A4;
         margin: 12mm 13mm 14mm;
-        @bottom-left { content: "Kaza Simülatörü — simülasyon çıktısıdır, kusur tespiti değildir"; font: 600 7pt Montserrat, sans-serif; color: #9a9290; }
+        @top-right { content: "SİMÜLASYON ÇIKTISI — HUKUKİ GÖRÜŞ DEĞİLDİR"; font: 700 6.5pt Montserrat, sans-serif; letter-spacing: 0.08em; color: #C81D25; }
+        @bottom-left { content: "Kaza Simülatörü — simülasyondur; hukuki görüş, bilirkişi raporu veya kusur tespiti değildir"; font: 600 7pt Montserrat, sans-serif; color: #9a9290; }
         @bottom-right { content: counter(page) " / " counter(pages); font: 600 7.5pt Montserrat, sans-serif; color: #9a9290; }
     }
     body > *:not(#yazdirma-alani) { display: none !important; }

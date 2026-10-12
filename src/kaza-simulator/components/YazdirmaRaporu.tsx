@@ -5,7 +5,7 @@
 
 import type { ReactNode } from 'react';
 import {
-    ARAC_TURLERI, AYDINLATMA_ADI, CARPISMA_TIP_ADI, GIZLILIK_NOTU, HAVA_ADI, ISIK_ADI, MARKA, MEVZUAT_KAYNAGI, SURUM, TARAF_RENK, YASAL_UYARI,
+    ANA_UYARI, ARAC_TURLERI, AYDINLATMA_ADI, CARPISMA_TIP_ADI, GIZLILIK_NOTU, HAVA_ADI, ISIK_ADI, MARKA, MEVZUAT_KAYNAGI, SURUM, TARAF_RENK, YASAL_UYARI,
 } from '../data/kazaData.ts';
 import { hukumListesi } from '../data/ktkMetinleri.ts';
 import { siddetEtiketi } from '../lib/physics.ts';
@@ -102,7 +102,10 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
                 </div>
                 <div className="flex-1 py-[4mm]">
                     <div className="text-[7.5pt] font-bold tracking-[0.18em] opacity-85">{MARKA.kurumBuyuk}</div>
-                    <h1 className="mt-[1mm] text-[17pt] font-extrabold leading-tight tracking-[-0.01em]">Trafik Kazası Simülasyon Raporu</h1>
+                    <h1 className="mt-[1mm] flex items-center gap-[2.5mm] text-[17pt] font-extrabold leading-tight tracking-[-0.01em]">
+                        Trafik Kazası Simülasyon Raporu
+                        <span className="rounded-full border border-white/60 px-[2mm] py-[0.3mm] text-[7pt] font-bold tracking-[0.12em]">SİMÜLASYON</span>
+                    </h1>
                     <div className="mt-[1mm] text-[8.5pt] opacity-90">{MARKA.uygulama} · Meslektaşlarımızın faydasına hazırlanmıştır</div>
                 </div>
                 <div className="flex flex-col justify-center gap-[1mm] border-l border-white/25 px-[5mm] text-[7.5pt] leading-tight">
@@ -114,7 +117,7 @@ export function YazdirmaRaporu({ sonuc, kusur, katilimcilar, tarafAdlari, kosull
 
             <div className="mt-[4mm] flex gap-[3mm] rounded-[2.5mm] border-[1.5px] px-[4mm] py-[2.5mm] text-[8.8pt] leading-snug" style={{ borderColor: KIRMIZI, background: '#fdf3f3', color: '#6d0c11' }}>
                 <span className="mt-[0.3mm] text-[12pt] font-black leading-none">!</span>
-                <p className="m-0"><b>SİMÜLASYON ÇIKTISIDIR — HUKUKİ GÖRÜŞ, BİLİRKİŞİ RAPORU VEYA KUSUR TESPİTİ DEĞİLDİR.</b> Basitleştirilmiş fizik modelleriyle çalışan bir simülasyon aracının çıktısıdır; delil niteliği taşımaz, resmî ya da adli işlemlerde bu nitelikle kullanılamaz. Kusur oranlarına ve kanun hükümlerine ilişkin tüm ifadeler <b>olasılık</b> bildirir.</p>
+                <p className="m-0"><b className="block text-[10pt]">{ANA_UYARI.baslik.toLocaleUpperCase('tr-TR')} — {ANA_UYARI.metin.split(';')[0].toLocaleUpperCase('tr-TR')}.</b> Basitleştirilmiş fizik modelleriyle çalışan bir simülasyon aracının çıktısıdır; delil niteliği taşımaz, resmî ya da adli işlemlerde bu nitelikle kullanılamaz. Kusur oranlarına ve kanun hükümlerine ilişkin tüm ifadeler <b>olasılık</b> bildirir.</p>
             </div>
 
             <Bolum no={no()} baslik="Olay bilgileri" bolunmesin>
